@@ -1,0 +1,6 @@
+# my.cnf
+[client]
+database = cecs544
+user = root
+password = nikeons
+default-character-set = utf8

@@ -1,0 +1,11 @@
+1) install docker
+2) follow steps here to setup db
+    https://medium.com/@chrischuck35/how-to-create-a-mysql-instance-with-docker-compose-1598f3cc1bee
+3) connect to db localhost:3306
+4) create db
+    - run 'create database cecs544'
+5) in project directory
+    - run 'python manage.py migrate'
+    - this should create the db tables that you need
+    - run 'python manage.py createsuperuser'
+6) now you should have a DB with a user that you can login with when running the webapp

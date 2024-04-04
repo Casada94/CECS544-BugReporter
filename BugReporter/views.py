@@ -1,3 +1,5 @@
+from typing import Callable
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
@@ -14,6 +16,24 @@ def home(request):
     context = {
         'users': request.user,
     }
+
     return HttpResponse(template.render(context,request))
 
 
+@require_login
+def search(request):
+    template = loader.get_template('search.html')
+    context = {
+        'users': request.user,
+    }
+
+    return HttpResponse(template.render(context,request))
+
+@require_login
+def reports(request):
+    template = loader.get_template('reports.html')
+    context = {
+        'users': request.user,
+    }
+
+    return HttpResponse(template.render(context,request))

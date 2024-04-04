@@ -5,13 +5,11 @@ from django.shortcuts import render, redirect
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.template import loader
-from django.utils.decorators import method_decorator
+from SemesterProject.decorators import require_login
 
 
+@require_login
 def home(request):
-    if not request.user.is_authenticated:
-        return redirect('/account/login')
-
     template = loader.get_template('home.html')
     context = {
         'users': request.user,

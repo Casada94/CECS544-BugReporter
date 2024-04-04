@@ -1,5 +1,6 @@
 from django.db import models
 
+
 # Create your models here.
 
 class Employee(models.Model):
@@ -7,16 +8,19 @@ class Employee(models.Model):
     Email = models.CharField(max_length=255, unique=True, null=False)
     Role = models.CharField(max_length=100, blank=True)
 
+
 class User(models.Model):
     Employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True, blank=True)
     Username = models.CharField(max_length=255, unique=True, null=False)
     Email = models.CharField(max_length=255, unique=True, null=False)
+
 
 class Project(models.Model):
     Name = models.CharField(max_length=255, null=False)
     Description = models.TextField(blank=True)
     CreationDate = models.DateField(null=True, blank=True)
     LastAnalysisDate = models.DateField(null=True, blank=True)
+
 
 class BugReport(models.Model):
     Project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -34,6 +38,7 @@ class BugReport(models.Model):
     ResolutionDate = models.DateField(null=True, blank=True)
     Comments = models.TextField(blank=True)
 
+
 class CommitHistory(models.Model):
     Employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     Project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -41,10 +46,12 @@ class CommitHistory(models.Model):
     DateTime = models.DateTimeField()
     AffectedFiles = models.TextField(blank=True)
 
+
 class SourceCode(models.Model):
     Project = models.ForeignKey(Project, on_delete=models.CASCADE)
     FilePath = models.TextField(null=False)
     Checksum = models.CharField(max_length=255, blank=True)
+
 
 class Notification(models.Model):
     Recipient = models.ForeignKey(User, on_delete=models.CASCADE)

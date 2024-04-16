@@ -1,0 +1,22 @@
+spring.profiles.active: dev
+
+spring:
+#  autoconfigure:
+#    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  server:
+    ssl:
+      key-store: src/main/resources/bugReport.jks
+      key-store-password: sE0/c+PG8GvBvUx+h3LGae/+E3MptoILayZ4oXV4K1NRYAXNXAxNpWZBAsRlavfQ
+
+      key-store-type: JKS
+
+  crypto:
+    key: claytonsKey
+
+  mySqlDatasource:
+    url: jdbc:mysql://localhost:3306/cecs544
+    username: root
+    password: UFNF7h9EhwcHo4o6q1l7NtFGIBWtlG9lcXzVskdlaKE=
+    driver: com.mysql.cj.jdbc.Driver
+  cache:
+    clearSchedule: 0 0 * * * *

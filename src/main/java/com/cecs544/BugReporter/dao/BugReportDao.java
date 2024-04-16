@@ -86,9 +86,10 @@ public class BugReportDao {
         return jdbcTemplate.queryForList(GET_EMPLOYEES,String.class);
     }
 
-    public void addNewBugReport(BugData bugReport) {
+    public int addNewBugReport(BugData bugReport) {
         Map<String,Object> params = buildParams(bugReport);
         namedParamJdbcTemplate.update(INSERT_NEW_BUG_REPORT,params);
+        return jdbcTemplate.queryForObject(Constants.GET_LAST_BUG_REPORT_ID,Integer.class);
     }
 
     public void updateBugReport(BugData bugReport) {
@@ -111,15 +112,15 @@ public class BugReportDao {
         params.put(Constants.QUERY_REPORTED_BY, bugReport.getReportedBy());
         params.put(Constants.QUERY_REPORTED_DATE, bugReport.getReportedDate());
         params.put(Constants.QUERY_FUNCTIONAL_AREA, Validator.nullOrString(bugReport.getFunctionalArea()));
-        params.put(Constants.QUERY_ASSIGNED_TO, Validator.nullOrString(bugReport.getAssignedTo()));
+        params.put(Constants.QUERY_ASSIGNED_TO, bugReport.getAssignedTo());
         params.put(Constants.QUERY_COMMENTS, Validator.nullOrString(bugReport.getComments()));
         params.put(Constants.QUERY_STATUS, Validator.nullOrString(bugReport.getStatus().getStatus()));
         params.put(Constants.QUERY_PRIORITY, bugReport.getPriority());
         params.put(Constants.QUERY_RESOLUTION, Validator.nullOrString(bugReport.getResolution().getResolution()));
         params.put(Constants.QUERY_RESOLUTION_VERSION, Validator.nullOrString(bugReport.getResolutionVersion()));
-        params.put(Constants.QUERY_RESOLVEDBY, Validator.nullOrString(bugReport.getResolvedBy()));
+        params.put(Constants.QUERY_RESOLVEDBY, bugReport.getResolvedBy());
         params.put(Constants.QUERY_RESOLVED_DATE, bugReport.getResolvedDate());
-        params.put(Constants.QUERY_TESTED_BY, Validator.nullOrString(bugReport.getTestedBy()));
+        params.put(Constants.QUERY_TESTED_BY, bugReport.getTestedBy());
         params.put(Constants.QUERY_TESTED_DATE, bugReport.getTestedDate());
         params.put(Constants.QUERY_TREAT_AS_DEFERRED, bugReport.getTreatAsDeferred());
         return params;
@@ -133,7 +134,7 @@ public class BugReportDao {
 
         return namedParamJdbcTemplate.query(query,params,(rs, rowNum) -> {
             BugData bugReport = new BugData();
-            bugReport.setBugReportId(rs.getString(Constants.COLUMN_BUG_REPORT_ID));
+            bugReport.setBugReportId(rs.getInt(Constants.COLUMN_BUG_REPORT_ID));
             bugReport.setProgramName(rs.getString(Constants.COLUMN_PROGRAM_NAME));
             bugReport.setRelease(rs.getString(Constants.COLUMN_RELEASE));
             bugReport.setVersion(rs.getString(Constants.COLUMN_VERSION));

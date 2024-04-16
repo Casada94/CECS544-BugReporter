@@ -20,3 +20,10 @@ spring:
     driver: com.mysql.cj.jdbc.Driver
   cache:
     clearSchedule: 0 0 * * * *
+  aws:
+    regionName: us-west-1
+    s3:
+      localUri: http://localhost:9000
+      bucketName: cecs-544-bug-bucket
+      accessKey: nBx7JWgR1+KLmlblB2WgtIuwBmrxA5Z9iCxHrJqLHIdj4eqN4boI62M3EXcf8E8s
+      secretKey: bg+iRVHp751fGS/bSn8dRDX1j6F7GcGy6Mj2Vt/RgXlUjJYo/4WxIewRL0gsPEi1b6VjA/aO5gdFrU3famcacw==

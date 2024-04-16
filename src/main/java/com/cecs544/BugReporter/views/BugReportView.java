@@ -5,6 +5,7 @@ import com.cecs544.BugReporter.dao.BugReportDao;
 import com.cecs544.BugReporter.enums.Role;
 import com.cecs544.BugReporter.login.SecurityService;
 import com.cecs544.BugReporter.model.BugData;
+import com.cecs544.BugReporter.util.AwsS3Util;
 import com.cecs544.BugReporter.util.Constants;
 import com.cecs544.BugReporter.util.Validator;
 import com.vaadin.flow.component.Component;
@@ -16,10 +17,12 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
+import com.vaadin.flow.component.upload.receivers.MultiFileBuffer;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
@@ -44,6 +47,8 @@ public class BugReportView extends VerticalLayout {
     private BugReportDao bugReportDao;
     @Autowired
     private SecurityService securityService;
+    @Autowired
+    private AwsS3Util awsS3Util;
 
     private Grid<BugData> grid = new Grid<>(BugData.class,false);
     private TabSheet tabSheet = new TabSheet();
@@ -63,7 +68,23 @@ public class BugReportView extends VerticalLayout {
 
         update.addClickListener(click->{
             BugData bugData = bugForm.getBugData();
+            MultiFileBuffer buffer=null;
+            if (bugData.isAttachments()) {
+                if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
+                    Notification.show("Please provide a description for your attachment.");
+                    return;
+                } else{
+                    buffer = bugForm.getMultiFileBuffer();
+                    if (buffer.getFiles().size()==0) {
+                        Notification.show("Please provide an attachment.");
+                        return;
+                    }
+                }
+            }
             bugReportDao.updateBugReport(bugData);
+            if(buffer!=null){
+                awsS3Util.upload(buffer,bugData.getBugReportId());
+            }
             reports.set(reports.indexOf(bugData),bugData);
         });
 

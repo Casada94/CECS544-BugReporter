@@ -11,7 +11,7 @@ import java.util.Objects;
 
 public class BugData {
 
-    private String BugReportId;
+    private Integer BugReportId;
     private String ProgramName;
     private String Release;
     private String Version;
@@ -42,8 +42,10 @@ public class BugData {
     public BugData() {
     }
 
-    /**  GETTERS  **/
-    public String getBugReportId() {return BugReportId;}
+    /**
+     * GETTERS
+     **/
+    public Integer getBugReportId() {return BugReportId;}
     public String getProgramName() {return ProgramName;}
     public String getRelease() {return Release;}
     public String getVersion() {return Version;}
@@ -74,7 +76,7 @@ public class BugData {
 
 
     /**  SETTERS  **/
-    public void setBugReportId(String bugReportId) {
+    public void setBugReportId(Integer bugReportId) {
         BugReportId = bugReportId;
     }
     public void setProgramName(String ProgramName) {this.ProgramName = ProgramName;}
@@ -200,6 +202,6 @@ public class BugData {
     @Override
     public boolean equals(Object obj) {
         if(obj == null) return false;
-        return this.BugReportId.equals(((BugData) obj).BugReportId);
+        return Objects.equals(this.BugReportId, ((BugData) obj).BugReportId);
     }
 }

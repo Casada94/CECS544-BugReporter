@@ -33,6 +33,7 @@ dependencies {
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	implementation 'org.apache.tomcat:tomcat-jdbc:10.1.16'
 
+	implementation 'software.amazon.awssdk:s3:2.20.102'
 
 
 

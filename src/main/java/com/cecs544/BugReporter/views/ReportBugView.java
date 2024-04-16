@@ -5,12 +5,14 @@ import com.cecs544.BugReporter.dao.BugReportDao;
 import com.cecs544.BugReporter.enums.Role;
 import com.cecs544.BugReporter.login.SecurityService;
 import com.cecs544.BugReporter.model.BugData;
+import com.cecs544.BugReporter.util.AwsS3Util;
 import com.cecs544.BugReporter.util.Constants;
 import com.cecs544.BugReporter.util.Validator;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.upload.receivers.MultiFileBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
@@ -32,7 +34,9 @@ public class ReportBugView extends VerticalLayout {
     @Autowired
     private BugReportDao bugReportDao;
     @Autowired
-    SecurityService securityService;
+    private SecurityService securityService;
+    @Autowired
+    private AwsS3Util awsS3Util;
 
     private Validator dataValidator = new Validator();
 
@@ -61,12 +65,28 @@ public class ReportBugView extends VerticalLayout {
         submit.addClickListener(click->{
             try{
                 BugData bugData = form.getBugData();
+                MultiFileBuffer buffer=null;
+                if (bugData.isAttachments()) {
+                    if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
+                        Notification.show("Please provide a description for your attachment.");
+                        return;
+                    } else{
+                        buffer = form.getMultiFileBuffer();
+                        if (buffer.getFiles().size()==0) {
+                            Notification.show("Please provide an attachment.");
+                            return;
+                        }
+                    }
+                }
                 String errors=null;
                 if((errors = dataValidator.validateInitialSubmission(bugData)) != null){
                     Notification.show(errors);
                 }else{
                     Notification.show("Success");
-                    bugReportDao.addNewBugReport(bugData);
+                    bugData.setBugReportId(bugReportDao.addNewBugReport(bugData));
+                    if(buffer!=null){
+                        awsS3Util.upload(buffer,bugData.getBugReportId());
+                    }
                 }
             } catch (IllegalStateException e){
                 e.printStackTrace();

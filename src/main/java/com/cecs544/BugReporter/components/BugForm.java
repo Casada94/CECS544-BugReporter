@@ -7,12 +7,16 @@ import com.cecs544.BugReporter.util.Validator;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MultiFileBuffer;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -31,10 +35,12 @@ public class BugForm extends VerticalLayout{
     private Text version = new Text(Constants.VERSION);
     private Select<String> versionField = new Select<>();
     private Text problemNumber = new Text(Constants.PROBLEM_NUMBER);
-    private TextField problemNumberField = new TextField();
+    private IntegerField problemNumberField = new IntegerField();
     private Select<String> reportType = new Select<>();
     private Select<String> severity = new Select<>();
     private TextField ifYesDescribeField = new TextField(Constants.IF_YES_DESCRIBE);
+    private MultiFileBuffer multiFileBuffer = new MultiFileBuffer();
+    private Upload attachmentUpload = new Upload(multiFileBuffer);
     private Checkbox attachments = new Checkbox(Constants.ATTACHMENTS);
     private TextField problemSummaryField = new TextField(Constants.PROBLEM_SUMMARY);
     private Text reproducible = new Text(Constants.REPRODUCIBLE);
@@ -72,6 +78,20 @@ public class BugForm extends VerticalLayout{
         releaseField.setReadOnly(true);
         versionField.setReadOnly(true);
 
+        if(initial){
+            attachmentUpload.setVisible(false);
+            ifYesDescribeField.setVisible(false);
+            attachments.addValueChangeListener(event -> {
+                if (attachments.getValue()) {
+                    attachmentUpload.setVisible(true);
+                    ifYesDescribeField.setVisible(true);
+                } else {
+                    attachmentUpload.setVisible(false);
+                    ifYesDescribeField.setVisible(false);
+                }
+            });
+        }
+        configureUpload();
 
         HorizontalLayout horizontalLayout1 = new HorizontalLayout();
         horizontalLayout1.setWidthFull();
@@ -119,6 +139,7 @@ public class BugForm extends VerticalLayout{
         attachmentHorizontalLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
         attachmentHorizontalLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.EVENLY);
         attachmentHorizontalLayout.add(attachments);
+        attachmentHorizontalLayout.add(attachmentUpload);
         ifYesDescribeField.setWidth("400px");
         attachmentHorizontalLayout.add(ifYesDescribeField);
         add(attachmentHorizontalLayout);
@@ -321,5 +342,28 @@ public class BugForm extends VerticalLayout{
         deferred.setValue(bugData.getTreatAsDeferred());
     }
 
+    public void configureUpload(){
+        attachmentUpload.setAcceptedFileTypes("image/jpeg", "image/png", "application/pdf");
+        attachmentUpload.setMaxFileSize(10*1024*1024);
 
+        attachmentUpload.addFileRejectedListener(event->{
+            String errorMessage = event.getErrorMessage();
+            Notification.show(errorMessage,5000, Notification.Position.MIDDLE);
+        });
+
+    }
+
+    public MultiFileBuffer getMultiFileBuffer(){
+        if(attachments.getValue()){
+            if(multiFileBuffer.getFiles().size() == 0){
+                Notification.show("Please select a file to upload",5000, Notification.Position.MIDDLE);
+                throw new IllegalStateException("No file selected");
+            }else {
+                for(String file: multiFileBuffer.getFiles()){
+//                    awsS3Util.uploadFile(file);
+                }
+            }
+        }
+        return multiFileBuffer;
+    }
 }

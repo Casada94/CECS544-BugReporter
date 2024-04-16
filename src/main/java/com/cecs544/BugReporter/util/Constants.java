@@ -142,6 +142,7 @@ public class Constants {
 
     public static final String INSERT_NEW_BUG_REPORT = "INSERT INTO BUG_REPORTS(PROGRAM_ID,REPORT_TYPE,SEVERITY,ATTACHMENTS,ATTACHMENT_DESC,PROBLEM_SUMMARY,REPRODUCIBLE,PROBLEM_DESCRIPTION,SUGGESTED_FIX,REPORTED_BY,REPORTED_DATE,FUNCTIONAL_AREA,ASSIGNED_TO,COMMENTS,STATUS,PRIORITY,RESOLUTION,RESOLUTION_VERSION,RESOLVED_BY,RESOLVED_DATE,TESTED_BY,TESTED_DATE,TREAT_AS_DEFERRED)\n" +
             "VALUES (:programId,:reportType,:severity,:attachments,:attachmentDesc,:problemSummary,:reproducible,:problemDescription,:suggestedFix,:reportedBy,:reportedDate,:functionalArea,:assignedTo,:comments,:status,:priority,:resolution,:resolutionVersion,:resolvedBy,:resolvedDate,:testedBy,:testedDate,:treatAsDeferred);";
+    public static final String GET_LAST_BUG_REPORT_ID= "select max(BUG_REPORT_ID) from BUG_REPORTS;";
 
     public static final String UPDATE_BUG_REPORT = "UPDATE BUG_REPORTS SET REPORT_TYPE=:reportType,SEVERITY=:severity,ATTACHMENTS=:attachments,ATTACHMENT_DESC=:attachmentDesc,PROBLEM_SUMMARY=:problemSummary,REPRODUCIBLE=:reproducible,PROBLEM_DESCRIPTION=:problemDescription,SUGGESTED_FIX=:suggestedFix,FUNCTIONAL_AREA=:functionalArea,ASSIGNED_TO=:assignedTo,COMMENTS=:comments,STATUS=:status,PRIORITY=:priority,RESOLUTION=:resolution,RESOLUTION_VERSION=:resolutionVersion,RESOLVED_BY=:resolvedBy,RESOLVED_DATE=:resolvedDate,TESTED_BY=:testedBy,TESTED_DATE=:testedDate,TREAT_AS_DEFERRED=:treatAsDeferred\n" +
             "WHERE BUG_REPORT_ID=:bugReportId;";

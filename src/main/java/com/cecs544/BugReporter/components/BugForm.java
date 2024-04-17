@@ -335,6 +335,16 @@ public class BugForm extends VerticalLayout {
         bugData.setResolution(resolution.getValue());
         bugData.setResolutionVersion(resolutionVersionField.getValue());
         bugData.setResolutionRelease(resolutionReleaseField.getValue());
+        if(resolution.getValue().equals(Constants.FIXED)){
+            if (resolutionReleaseField.getValue().isEmpty()) {
+                Notification.show("Please select a resolution release", 5000, Notification.Position.MIDDLE);
+                throw new IllegalStateException("No resolution release selected");
+            } else if(resolutionVersionField.getValue().isEmpty()){
+                Notification.show("Please select a resolution version", 5000, Notification.Position.MIDDLE);
+                throw new IllegalStateException("No resolution version selected");
+            }
+        }
+        bugData.setResolutionId(programData.get(programField.getValue()).get(resolutionReleaseField.getValue()).get(resolutionVersionField.getValue()));
         bugData.setResolvedBy(resolvedByField.getValue());
         bugData.setResolvedDate(Validator.nullOrDate(resolvedDatePicker.getValue()));
         bugData.setTestedBy(testedByField.getValue());

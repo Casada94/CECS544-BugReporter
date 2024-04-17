@@ -119,7 +119,7 @@ public class BugReportDao {
         params.put(Constants.QUERY_STATUS, Validator.nullOrString(bugReport.getStatus().getStatus()));
         params.put(Constants.QUERY_PRIORITY, bugReport.getPriority());
         params.put(Constants.QUERY_RESOLUTION, Validator.nullOrString(bugReport.getResolution().getResolution()));
-        params.put(Constants.QUERY_RESOLUTION_VERSION, Validator.nullOrString(bugReport.getResolutionVersion()));
+        params.put(Constants.QUERY_RESOLUTION_ID, bugReport.getResolutionID());
         params.put(Constants.QUERY_RESOLVEDBY, bugReport.getResolvedBy());
         params.put(Constants.QUERY_RESOLVED_DATE, bugReport.getResolvedDate());
         params.put(Constants.QUERY_TESTED_BY, bugReport.getTestedBy());

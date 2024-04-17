@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-@Route(value="yourBugReports", layout = MainLayout.class)
+@Route(value = "yourBugReports", layout = MainLayout.class)
 @PageTitle("Your Bug Reports")
 @PermitAll
 @UIScope
@@ -58,21 +58,24 @@ public class BugReportView extends VerticalLayout {
     @Autowired
     private AwsS3Util awsS3Util;
 
-    private Grid<BugData> grid = new Grid<>(BugData.class,false);
+    private Grid<BugData> grid = new Grid<>(BugData.class, false);
     private TabSheet tabSheet = new TabSheet();
+    private Tab tab = new Tab();
     private BugForm bugForm = null;
     private Button update = new Button(Constants.UPDATE);
     private Button refreshButton = new Button(new Icon(VaadinIcon.REFRESH));
     private List<BugData> reports;
     private Select<String> uploadAttachment;
     private Button downloadButton;
-    private Map<String,Map<String,Map<String,Integer>>> programData;
+    private Map<String, Map<String, Map<String, Integer>>> programData;
     private List<String> reportTypes;
     private List<String> resolutions;
     private List<String> employees;
-    UserDetails user;
-    boolean isUser;
-    Role userRole;
+    private UserDetails user;
+    private boolean isUser;
+    private Role userRole;
+    private Anchor previous;
+    private List<String> fileList;
 
     public BugReportView() {
         addClassName("ReportBugView");
@@ -80,51 +83,74 @@ public class BugReportView extends VerticalLayout {
         add(new H1("Review Bug Reports"));
         add(refreshButton);
 
-        update.addClickListener(click->{
+        update.addClickListener(click -> {
             BugData bugData = bugForm.getBugData();
-            MultiFileBuffer buffer=null;
+            MultiFileBuffer buffer = null;
             if (bugData.isAttachments()) {
-                if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
-                    Notification.show("Please provide a description for your attachment.");
-                    return;
-                } else{
-                    buffer = bugForm.getMultiFileBuffer();
-                    if (buffer.getFiles().isEmpty() && bugForm.isInitialSubmission()) {
-                        Notification.show("Please provide an attachment.");
+                if (bugForm.isInitialSubmission()) {
+                    if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
+                        Notification.show("Please provide a description for your attachment.");
                         return;
+                    } else {
+                        buffer = bugForm.getMultiFileBuffer();
+                        if (buffer.getFiles().isEmpty()) {
+                            Notification.show("Please provide an attachment.");
+                            return;
+                        }
                     }
+                } else {
+                    if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
+                        Notification.show("Please provide a description for your attachment.");
+                        return;
+                    } else {
+                        buffer = bugForm.getMultiFileBuffer();
+                        if (buffer.getFiles().isEmpty() && bugForm.attachmentListIsEmpty()) {
+                            Notification.show("Please provide an attachment.");
+                            return;
+                        }
+                    }
+                }
+
+            } else {
+                bugData.setAttachmentDesc(null);
+                if (!bugForm.attachmentListIsEmpty()) {
+                    awsS3Util.deleteAllFiles(String.valueOf(bugData.getBugReportId()), fileList);
                 }
             }
             bugReportDao.updateBugReport(bugData);
-            if(buffer!=null){
-                awsS3Util.upload(buffer,bugData.getBugReportId());
+            if (buffer != null) {
+                awsS3Util.upload(buffer, bugData.getBugReportId());
             }
-            reports.set(reports.indexOf(bugData),bugData);
-            Notification.show("Bug Report Updated",5000, Notification.Position.MIDDLE);
+            reports.set(reports.indexOf(bugData), bugData);
+            Notification.show("Bug Report Updated", 5000, Notification.Position.MIDDLE);
         });
 
-        grid.addItemClickListener(item->{
+        grid.addItemClickListener(item -> {
             tabSheet.setVisible(true);
             update.setVisible(true);
             bugForm.updateForm(item.getItem());
-            if(bugForm.hasAttachments())
-                bugForm.setUploadList(awsS3Util.getFileList(item.getItem().getBugReportId()));
+            if (bugForm.hasAttachments()) {
+                fileList = awsS3Util.getFileList(item.getItem().getBugReportId());
+                bugForm.setUploadList(fileList);
+            }
+            if (previous != null) {
+                remove(previous);
+            }
         });
-
 
 
     }
 
     @PostConstruct
-    private void finsihSetup(){
+    private void finsihSetup() {
         user = securityService.getAuthenticatedUser();
         isUser = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("USER"));
         userRole = Validator.determineUserType(user.getAuthorities().toArray()[0].toString());
         reports = new ArrayList<>();
-        reports = bugReportDao.getBugReports(securityService.getAuthenticatedUser().getUsername(),isUser);
+        reports = bugReportDao.getBugReports(securityService.getAuthenticatedUser().getUsername(), isUser);
 //        grid.setItems(new ListDataProvider<>(reports));
 
-        configureGrid(isUser,reports);
+        configureGrid(isUser, reports);
 
         grid.setSelectionMode(Grid.SelectionMode.SINGLE);
         grid.setHeight("500px");
@@ -135,13 +161,14 @@ public class BugReportView extends VerticalLayout {
         reportTypes = bugReportDao.getReportTypes();
         resolutions = bugReportDao.getResolutions();
         employees = bugReportDao.getEmployees();
-        bugForm = new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,false);
+        bugForm = new BugForm(programData, reportTypes, resolutions, employees, isUser, user, userRole, false);
         uploadAttachment = bugForm.getUploadAttachmentSelect();
         downloadButton = bugForm.getDownloadAttachmentsButton();
         downloadClickListener(downloadButton);
 
 
-        tabSheet.add("Bug Report",new Tab(bugForm)) ;
+        tab.add(bugForm);
+        tabSheet.add("Bug Report", tab);
         tabSheet.setVisible(false);
         update.setVisible(false);
         tabSheet.setWidthFull();
@@ -149,25 +176,27 @@ public class BugReportView extends VerticalLayout {
 
         add(update);
 
-        refreshButton.addClickListener(click->{
-            reports = bugReportDao.getBugReports(securityService.getAuthenticatedUser().getUsername(),isUser);
-            refreshForm();
+        refreshButton.addClickListener(click -> {
+            reports = bugReportDao.getBugReports(securityService.getAuthenticatedUser().getUsername(), isUser);
+            if (update.isVisible()) {
+                refreshForm();
+            }
             grid.setItems(new ListDataProvider<>(reports));
         });
 
     }
 
-    private void configureGrid(boolean isUser, List<BugData> reports){
+    private void configureGrid(boolean isUser, List<BugData> reports) {
         grid.addClassName("BugData");
         grid.setSizeFull();
         if (isUser) {
-            grid.setColumns("bugReportId","programName","release","version","reportType",
-                    "severity","attachments","attachmentDesc","problemSummary","reproducible",
-                    "problemDescription","suggestedFix","reportedBy","reportedDate",
-                    "functionalArea","assignedTo","comments","status","priority","resolution",
-                    "resolutionVersion","resolvedBy","resolvedDate","testedBy","testedDate",
+            grid.setColumns("bugReportId", "programName", "release", "version", "reportType",
+                    "severity", "attachments", "attachmentDesc", "problemSummary", "reproducible",
+                    "problemDescription", "suggestedFix", "reportedBy", "reportedDate",
+                    "functionalArea", "assignedTo", "comments", "status", "priority", "resolution",
+                    "resolutionVersion", "resolvedBy", "resolvedDate", "testedBy", "testedDate",
                     "treatAsDeferred");
-        } else{
+        } else {
             Grid.Column<BugData> bugIdColumn = grid.addColumn(BugData::getBugReportId);
             Grid.Column<BugData> programNameColumn = grid.addColumn(BugData::getProgramName);
             Grid.Column<BugData> reportedDateColumn = grid.addColumn(BugData::getReportedDate);
@@ -179,12 +208,12 @@ public class BugReportView extends VerticalLayout {
             BugDataFilter filter = new BugDataFilter(bugDataView);
             grid.getHeaderRows().clear();
             HeaderRow headerRow = grid.appendHeaderRow();
-            headerRow.getCell(bugIdColumn).setComponent(createFilterHeader("Bug ID",filter::setBugId));
-            headerRow.getCell(programNameColumn).setComponent(createFilterHeader("Program Name",filter::setProgramName));
-            headerRow.getCell(reportedDateColumn).setComponent(createFilterHeader("Reported Date",filter::setReportedDate));
-            headerRow.getCell(statusColumn).setComponent(createFilterHeader("Status",filter::setStatus));
-            headerRow.getCell(resolutionColumn).setComponent(createFilterHeader("Resolution",filter::setResolution));
-            headerRow.getCell(resolvedDateColumn).setComponent(createFilterHeader("Resolved Date",filter::setResolvedDate));
+            headerRow.getCell(bugIdColumn).setComponent(createFilterHeader("Bug ID", filter::setBugId));
+            headerRow.getCell(programNameColumn).setComponent(createFilterHeader("Program Name", filter::setProgramName));
+            headerRow.getCell(reportedDateColumn).setComponent(createFilterHeader("Reported Date", filter::setReportedDate));
+            headerRow.getCell(statusColumn).setComponent(createFilterHeader("Status", filter::setStatus));
+            headerRow.getCell(resolutionColumn).setComponent(createFilterHeader("Resolution", filter::setResolution));
+            headerRow.getCell(resolvedDateColumn).setComponent(createFilterHeader("Resolved Date", filter::setResolvedDate));
         }
 //        grid.getColumns().forEach(col -> {
 //            col.setAutoWidth(true);
@@ -193,19 +222,21 @@ public class BugReportView extends VerticalLayout {
 //        });
 
 
-
     }
 
-    private void refreshForm(){
+    private void refreshForm() {
         tabSheet.setVisible(false);
         update.setVisible(false);
-        bugForm = new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,false);
+        bugForm = new BugForm(programData, reportTypes, resolutions, employees, isUser, user, userRole, false);
         uploadAttachment = bugForm.getUploadAttachmentSelect();
         downloadButton = bugForm.getDownloadAttachmentsButton();
         downloadButton.setId("downloadButton");
         downloadClickListener(downloadButton);
-        replace(tabSheet,new Tab(bugForm));
+        Tab tab2 = new Tab(bugForm);
+        replace(tab, tab2);
+        tab = tab2;
     }
+
     private InputStream getStream(File file) {
         FileInputStream stream = null;
         try {
@@ -216,23 +247,24 @@ public class BugReportView extends VerticalLayout {
 
         return stream;
     }
-    private void downloadClickListener(Button downButton){
-        downButton.addClickListener(click->{
-            System.out.println("Download Button Clicked");
+
+    private void downloadClickListener(Button downButton) {
+        downButton.addClickListener(click -> {
             if (uploadAttachment.getValue().isEmpty()) {
                 Notification.show("Please select a file to download");
                 return;
             }
-            File file = awsS3Util.getFile(bugForm.getBugReportId(),uploadAttachment.getValue());
+            File file = awsS3Util.getFile(bugForm.getBugReportId(), uploadAttachment.getValue());
             StreamResource streamResource = new StreamResource(file.getName(), () -> getStream(file));
             Anchor link = new Anchor(streamResource, String.format("%s (%d KB)", file.getName(),
                     (int) file.length() / 1024));
             link.getElement().setAttribute("download", true);
             this.add(link);
             link.getElement().callJsFunction("click");
-            System.out.println("Download Button EXIT");
+            previous = link;
         });
     }
+
     private static Component createFilterHeader(String labelText,
                                                 Consumer<String> filterChangeConsumer) {
         NativeLabel label = new NativeLabel(labelText);
@@ -252,7 +284,8 @@ public class BugReportView extends VerticalLayout {
 
         return layout;
     }
-    private static class BugDataFilter{
+
+    private static class BugDataFilter {
         private final GridListDataView<BugData> dataView;
 
         private String BugReportId;
@@ -271,70 +304,85 @@ public class BugReportView extends VerticalLayout {
         private String testedBy;
         private String testedDate;
 
-        public BugDataFilter(GridListDataView<BugData> dataView){
+        public BugDataFilter(GridListDataView<BugData> dataView) {
             this.dataView = dataView;
         }
 
-        public void setBugId(String bugId){
+        public void setBugId(String bugId) {
             this.BugReportId = bugId;
             dataView.refreshAll();
         }
-        public void setProgramName(String programName){
+
+        public void setProgramName(String programName) {
             this.ProgramName = programName;
             dataView.refreshAll();
         }
-        public void setReportType(String reportType){
+
+        public void setReportType(String reportType) {
             this.Release = reportType;
             dataView.refreshAll();
         }
-        public void setReportedDate(String reportedDate){
+
+        public void setReportedDate(String reportedDate) {
             this.reportedDate = reportedDate;
             dataView.refreshAll();
         }
-        public void setSeverity(String severity){
+
+        public void setSeverity(String severity) {
             this.severity = severity;
             dataView.refreshAll();
         }
-        public void setReportedBy(String reportedBy){
+
+        public void setReportedBy(String reportedBy) {
             this.reportedBy = reportedBy;
             dataView.refreshAll();
         }
-        public void setFunctionalArea(String functionalArea){
+
+        public void setFunctionalArea(String functionalArea) {
             this.functionalArea = functionalArea;
             dataView.refreshAll();
         }
-        public void setAssignedTo(String assignedTo){
+
+        public void setAssignedTo(String assignedTo) {
             this.assignedTo = assignedTo;
             dataView.refreshAll();
         }
-        public void setStatus(String status){
+
+        public void setStatus(String status) {
             this.status = status;
             dataView.refreshAll();
         }
-        public void setPriority(String priority){
+
+        public void setPriority(String priority) {
             this.priority = priority;
             dataView.refreshAll();
         }
-        public void setResolution(String resolution){
+
+        public void setResolution(String resolution) {
             this.resolution = resolution;
             dataView.refreshAll();
         }
-        public void setResolvedBy(String resolvedBy){
+
+        public void setResolvedBy(String resolvedBy) {
             this.resolvedBy = resolvedBy;
             dataView.refreshAll();
         }
-        public void setResolvedDate(String resolvedDate){
+
+        public void setResolvedDate(String resolvedDate) {
             this.resolvedDate = resolvedDate;
             dataView.refreshAll();
         }
-        public void setTestedBy(String testedBy){
+
+        public void setTestedBy(String testedBy) {
             this.testedBy = testedBy;
             dataView.refreshAll();
         }
-        public void setTestedDate(String testedDate){
+
+        public void setTestedDate(String testedDate) {
             this.testedDate = testedDate;
             dataView.refreshAll();
         }
+
         private boolean matches(String value, String searchTerm) {
             return searchTerm == null || searchTerm.isEmpty()
                     || value.toLowerCase().contains(searchTerm.toLowerCase());

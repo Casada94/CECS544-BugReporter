@@ -36,37 +36,37 @@ public class BugReportDao {
     public static final String UPDATE_BUG_REPORT = Constants.UPDATE_BUG_REPORT;
     public static final String GET_PROGRAM_DATA = Constants.GET_PROGRAM_DATA;
     public static final String GET_REPORT_TYPES = Constants.GET_REPORT_TYPES;
-    public static final String GET_RESOLUTIONS= Constants.GET_RESOLUTIONS;
-    public static final String GET_EMPLOYEES= Constants.GET_EMPLOYEES;
+    public static final String GET_RESOLUTIONS = Constants.GET_RESOLUTIONS;
+    public static final String GET_EMPLOYEES = Constants.GET_EMPLOYEES;
 
     @Cacheable("programData")
-    public Map<String,Map<String,Map<String,Integer>>> getProgramData(){
-        Map<String,Map<String,Map<String,Integer>>> programData = new HashMap<>();
-        try{
-           jdbcTemplate.query(GET_PROGRAM_DATA,rs->{
-               String programName = rs.getString(Constants.COLUMN_PROGRAM_NAME);
-               String release = rs.getString(Constants.COLUMN_RELEASE);
-               String version = rs.getString(Constants.COLUMN_VERSION);
-               int id = rs.getInt(Constants.COLUMN_PROGRAM_ID);
-               if(programData.containsKey(programName)){
-                   Map<String,Map<String,Integer>> releaseData = programData.get(programName);
-                   if(releaseData.containsKey(release)){
-                       Map<String,Integer> versionData = releaseData.get(release);
-                       versionData.put(version,id);
-                   } else {
-                       Map<String,Integer> versionData = new HashMap<>();
-                       versionData.put(version,id);
-                       releaseData.put(release,versionData);
-                   }
-               } else {
-                   Map<String,Integer> versionData = new HashMap<>();
-                   versionData.put(version,id);
-                   Map<String,Map<String,Integer>> releaseData = new HashMap<>();
-                   releaseData.put(release,versionData);
-                   programData.put(programName,releaseData);
-               }
-           });
-        } catch(DataAccessException e){
+    public Map<String, Map<String, Map<String, Integer>>> getProgramData() {
+        Map<String, Map<String, Map<String, Integer>>> programData = new HashMap<>();
+        try {
+            jdbcTemplate.query(GET_PROGRAM_DATA, rs -> {
+                String programName = rs.getString(Constants.COLUMN_PROGRAM_NAME);
+                String release = rs.getString(Constants.COLUMN_RELEASE);
+                String version = rs.getString(Constants.COLUMN_VERSION);
+                int id = rs.getInt(Constants.COLUMN_PROGRAM_ID);
+                if (programData.containsKey(programName)) {
+                    Map<String, Map<String, Integer>> releaseData = programData.get(programName);
+                    if (releaseData.containsKey(release)) {
+                        Map<String, Integer> versionData = releaseData.get(release);
+                        versionData.put(version, id);
+                    } else {
+                        Map<String, Integer> versionData = new HashMap<>();
+                        versionData.put(version, id);
+                        releaseData.put(release, versionData);
+                    }
+                } else {
+                    Map<String, Integer> versionData = new HashMap<>();
+                    versionData.put(version, id);
+                    Map<String, Map<String, Integer>> releaseData = new HashMap<>();
+                    releaseData.put(release, versionData);
+                    programData.put(programName, releaseData);
+                }
+            });
+        } catch (DataAccessException e) {
             e.printStackTrace();
             Notification.show("Error getting program data");
         }
@@ -74,32 +74,34 @@ public class BugReportDao {
     }
 
     @Cacheable("resolutions")
-    public List<String> getResolutions(){
-        return jdbcTemplate.queryForList(GET_RESOLUTIONS,String.class);
+    public List<String> getResolutions() {
+        return jdbcTemplate.queryForList(GET_RESOLUTIONS, String.class);
     }
+
     @Cacheable("reportTypes")
-    public List<String> getReportTypes(){
-        return jdbcTemplate.queryForList(GET_REPORT_TYPES,String.class);
+    public List<String> getReportTypes() {
+        return jdbcTemplate.queryForList(GET_REPORT_TYPES, String.class);
     }
+
     @Cacheable("employees")
-    public List<String> getEmployees(){
-        return jdbcTemplate.queryForList(GET_EMPLOYEES,String.class);
+    public List<String> getEmployees() {
+        return jdbcTemplate.queryForList(GET_EMPLOYEES, String.class);
     }
 
     public int addNewBugReport(BugData bugReport) {
-        Map<String,Object> params = buildParams(bugReport);
-        namedParamJdbcTemplate.update(INSERT_NEW_BUG_REPORT,params);
-        return jdbcTemplate.queryForObject(Constants.GET_LAST_BUG_REPORT_ID,Integer.class);
+        Map<String, Object> params = buildParams(bugReport);
+        namedParamJdbcTemplate.update(INSERT_NEW_BUG_REPORT, params);
+        return jdbcTemplate.queryForObject(Constants.GET_LAST_BUG_REPORT_ID, Integer.class);
     }
 
     public void updateBugReport(BugData bugReport) {
-        Map<String,Object> params = buildParams(bugReport);
-        params.put(Constants.QUERY_BUG_REPORT_ID,bugReport.getBugReportId());
-        namedParamJdbcTemplate.update(UPDATE_BUG_REPORT,params);
+        Map<String, Object> params = buildParams(bugReport);
+        params.put(Constants.QUERY_BUG_REPORT_ID, bugReport.getBugReportId());
+        namedParamJdbcTemplate.update(UPDATE_BUG_REPORT, params);
     }
 
-    public Map<String,Object> buildParams(BugData bugReport){
-        Map<String,Object> params = new HashMap<>();
+    public Map<String, Object> buildParams(BugData bugReport) {
+        Map<String, Object> params = new HashMap<>();
         params.put(Constants.QUERY_PROGRAM_ID, bugReport.getProgramId());
         params.put(Constants.QUERY_REPORT_TYPE, bugReport.getReportType().getReportType());
         params.put(Constants.QUERY_SEVERITY, bugReport.getSeverity().getSeverity());
@@ -126,13 +128,13 @@ public class BugReportDao {
         return params;
     }
 
-    public List<BugData> getBugReports(String username,boolean isUser) {
-        Map<String,Object> params = new HashMap<>();
+    public List<BugData> getBugReports(String username, boolean isUser) {
+        Map<String, Object> params = new HashMap<>();
         params.put(Constants.QUERY_REPORTED_BY, username);
 
         String query = isUser ? Constants.GET_USERS_BUG_REPORTS : Constants.GET_ALL_BUG_REPORTS;
 
-        return namedParamJdbcTemplate.query(query,params,(rs, rowNum) -> {
+        return namedParamJdbcTemplate.query(query, params, (rs, rowNum) -> {
             BugData bugReport = new BugData();
             bugReport.setBugReportId(rs.getInt(Constants.COLUMN_BUG_REPORT_ID));
             bugReport.setProgramName(rs.getString(Constants.COLUMN_PROGRAM_NAME));
@@ -165,9 +167,8 @@ public class BugReportDao {
     }
 
 
-
     @Scheduled(cron = "${spring.cache.clearSchedule}")
-    public void clearCache(){
-        cacheManager.getCacheNames().forEach(cache->cacheManager.getCache(cache).clear());
+    public void clearCache() {
+        cacheManager.getCacheNames().forEach(cache -> cacheManager.getCache(cache).clear());
     }
 }

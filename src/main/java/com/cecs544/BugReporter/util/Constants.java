@@ -28,6 +28,7 @@ public class Constants {
     public static final String STATUS = "STATUS";
     public static final String PRIORITY = "PRIORITY";
     public static final String RESOLUTION = "RESOLUTION";
+    public static final String RESOLUTION_RELEASE = "RESOLUTION RELEASE";
     public static final String RESOLUTION_VERSION = "RESOLUTION VERSION";
     public static final String FOR_OFFICE_USE_ONLY = "ITEMS BELOW ARE FOR USE ONLY BY THE DEVELOPMENT TEAM";
     public static final String RESOLVED_BY = "RESOLVED BY";
@@ -81,13 +82,13 @@ public class Constants {
     public static final String NAME_FIELD_WIDTH = "300px";
     public static final String TEXT_AREA_HEIGHT = "200px";
 
-    public static final  List<String> reportTypes = new ArrayList<>(List.of(new String[]{CODING_ERROR, DESIGN_ERROR, SUGGESTION, DOCUMENTATION, HARDWARE, QUERY}));
-    public static final  List<String> severities = new ArrayList<>(List.of(new String[]{FATAL, SERIOUS, MINOR}));
-    public static final  List<Integer> priorities = new ArrayList<>(List.of(new Integer[]{1,2,3,4,5}));
+    public static final List<String> reportTypes = new ArrayList<>(List.of(new String[]{CODING_ERROR, DESIGN_ERROR, SUGGESTION, DOCUMENTATION, HARDWARE, QUERY}));
+    public static final List<String> severities = new ArrayList<>(List.of(new String[]{FATAL, SERIOUS, MINOR}));
+    public static final List<Integer> priorities = new ArrayList<>(List.of(new Integer[]{1, 2, 3, 4, 5}));
     public static final List<String> statuses = new ArrayList<>(List.of(new String[]{OPEN, CLOSED}));
 
 
-    public static final String QUERY_BUG_REPORT_ID= "bugReportId";
+    public static final String QUERY_BUG_REPORT_ID = "bugReportId";
     public static final String QUERY_PROGRAM_ID = "programId";
     public static final String QUERY_REPORT_TYPE = "reportType";
     public static final String QUERY_SEVERITY = "severity";
@@ -142,34 +143,34 @@ public class Constants {
 
     public static final String INSERT_NEW_BUG_REPORT = "INSERT INTO BUG_REPORTS(PROGRAM_ID,REPORT_TYPE,SEVERITY,ATTACHMENTS,ATTACHMENT_DESC,PROBLEM_SUMMARY,REPRODUCIBLE,PROBLEM_DESCRIPTION,SUGGESTED_FIX,REPORTED_BY,REPORTED_DATE,FUNCTIONAL_AREA,ASSIGNED_TO,COMMENTS,STATUS,PRIORITY,RESOLUTION,RESOLUTION_VERSION,RESOLVED_BY,RESOLVED_DATE,TESTED_BY,TESTED_DATE,TREAT_AS_DEFERRED)\n" +
             "VALUES (:programId,:reportType,:severity,:attachments,:attachmentDesc,:problemSummary,:reproducible,:problemDescription,:suggestedFix,:reportedBy,:reportedDate,:functionalArea,:assignedTo,:comments,:status,:priority,:resolution,:resolutionVersion,:resolvedBy,:resolvedDate,:testedBy,:testedDate,:treatAsDeferred);";
-    public static final String GET_LAST_BUG_REPORT_ID= "select max(BUG_REPORT_ID) from BUG_REPORTS;";
+    public static final String GET_LAST_BUG_REPORT_ID = "select max(BUG_REPORT_ID) from BUG_REPORTS;";
 
     public static final String UPDATE_BUG_REPORT = "UPDATE BUG_REPORTS SET REPORT_TYPE=:reportType,SEVERITY=:severity,ATTACHMENTS=:attachments,ATTACHMENT_DESC=:attachmentDesc,PROBLEM_SUMMARY=:problemSummary,REPRODUCIBLE=:reproducible,PROBLEM_DESCRIPTION=:problemDescription,SUGGESTED_FIX=:suggestedFix,FUNCTIONAL_AREA=:functionalArea,ASSIGNED_TO=:assignedTo,COMMENTS=:comments,STATUS=:status,PRIORITY=:priority,RESOLUTION=:resolution,RESOLUTION_VERSION=:resolutionVersion,RESOLVED_BY=:resolvedBy,RESOLVED_DATE=:resolvedDate,TESTED_BY=:testedBy,TESTED_DATE=:testedDate,TREAT_AS_DEFERRED=:treatAsDeferred\n" +
             "WHERE BUG_REPORT_ID=:bugReportId;";
 
     public static final String GET_USERS_BUG_REPORTS = """
-    select BUG_REPORT_ID, PROGRAMS.NAME as NAME, PROGRAMS.`RELEASE` as `RELEASE`, PROGRAMS.version as VERSION,REPORT_TYPE,SEVERITY,ATTACHMENTS, ATTACHMENT_DESC,PROBLEM_SUMMARY,REPRODUCIBLE,PROBLEM_DESCRIPTION,SUGGESTED_FIX, REPORTED_BY,REPORTED_DATE, FUNCTIONAL_AREA,ASSIGNED_TO,COMMENTS,STATUS,PRIORITY,RESOLUTION,RESOLUTION_VERSION,RESOLVED_BY,RESOLVED_DATE,TESTED_BY,TESTED_DATE, TREAT_AS_DEFERRED
-        from BUG_REPORTS
-            inner join PROGRAMS
-                   on BUG_REPORTS.PROGRAM_ID=PROGRAMS.ID
-            inner join ACCOUNTS
-                   on BUG_REPORTS.REPORTED_BY=ACCOUNTS.USERNAME
-        WHERE ACCOUNTS.USERNAME=:reportedBy
-        ORDER BY BUG_REPORTS.REPORTED_BY DESC;""";
+            select BUG_REPORT_ID, PROGRAMS.NAME as NAME, PROGRAMS.`RELEASE` as `RELEASE`, PROGRAMS.version as VERSION,REPORT_TYPE,SEVERITY,ATTACHMENTS, ATTACHMENT_DESC,PROBLEM_SUMMARY,REPRODUCIBLE,PROBLEM_DESCRIPTION,SUGGESTED_FIX, REPORTED_BY,REPORTED_DATE, FUNCTIONAL_AREA,ASSIGNED_TO,COMMENTS,STATUS,PRIORITY,RESOLUTION,RESOLUTION_VERSION,RESOLVED_BY,RESOLVED_DATE,TESTED_BY,TESTED_DATE, TREAT_AS_DEFERRED
+                from BUG_REPORTS
+                    inner join PROGRAMS
+                           on BUG_REPORTS.PROGRAM_ID=PROGRAMS.ID
+                    inner join ACCOUNTS
+                           on BUG_REPORTS.REPORTED_BY=ACCOUNTS.USERNAME
+                WHERE ACCOUNTS.USERNAME=:reportedBy
+                ORDER BY BUG_REPORTS.REPORTED_BY DESC;""";
 
     public static final String GET_ALL_BUG_REPORTS = """
-        select BUG_REPORT_ID, PROGRAMS.NAME as NAME, PROGRAMS.`RELEASE` as `RELEASE`, PROGRAMS.version as VERSION,REPORT_TYPE,SEVERITY,ATTACHMENTS, ATTACHMENT_DESC,PROBLEM_SUMMARY,REPRODUCIBLE,PROBLEM_DESCRIPTION,SUGGESTED_FIX, REPORTED_BY,REPORTED_DATE, FUNCTIONAL_AREA,ASSIGNED_TO,COMMENTS,STATUS,PRIORITY,RESOLUTION,RESOLUTION_VERSION,RESOLVED_BY,RESOLVED_DATE,TESTED_BY,TESTED_DATE, TREAT_AS_DEFERRED
-        from BUG_REPORTS
-            inner join PROGRAMS
-                   on BUG_REPORTS.PROGRAM_ID=PROGRAMS.ID
-            inner join ACCOUNTS
-                   on BUG_REPORTS.REPORTED_BY=ACCOUNTS.USERNAME
-        WHERE STATUS='OPEN'
-        ORDER BY BUG_REPORTS.REPORTED_BY DESC;""";
+            select BUG_REPORT_ID, PROGRAMS.NAME as NAME, PROGRAMS.`RELEASE` as `RELEASE`, PROGRAMS.version as VERSION,REPORT_TYPE,SEVERITY,ATTACHMENTS, ATTACHMENT_DESC,PROBLEM_SUMMARY,REPRODUCIBLE,PROBLEM_DESCRIPTION,SUGGESTED_FIX, REPORTED_BY,REPORTED_DATE, FUNCTIONAL_AREA,ASSIGNED_TO,COMMENTS,STATUS,PRIORITY,RESOLUTION,RESOLUTION_VERSION,RESOLVED_BY,RESOLVED_DATE,TESTED_BY,TESTED_DATE, TREAT_AS_DEFERRED
+            from BUG_REPORTS
+                inner join PROGRAMS
+                       on BUG_REPORTS.PROGRAM_ID=PROGRAMS.ID
+                inner join ACCOUNTS
+                       on BUG_REPORTS.REPORTED_BY=ACCOUNTS.USERNAME
+            WHERE STATUS='OPEN'
+            ORDER BY BUG_REPORTS.REPORTED_BY DESC;""";
     public static final String GET_PROGRAM_DATA = "SELECT * FROM PROGRAMS GROUP BY NAME,`RELEASE`,VERSION ORDER BY NAME,`RELEASE`,VERSION";
     public static final String GET_REPORT_TYPES = "SELECT * FROM REPORT_TYPE";
-    public static final String GET_RESOLUTIONS= "SELECT * FROM RESOLUTION";
-    public static final String GET_EMPLOYEES= "SELECT USERNAME FROM ACCOUNTS WHERE AUTHORITY<>'USER' AND AUTHORITY<>'ADMIN'";
+    public static final String GET_RESOLUTIONS = "SELECT * FROM RESOLUTION";
+    public static final String GET_EMPLOYEES = "SELECT USERNAME FROM ACCOUNTS WHERE AUTHORITY<>'USER' AND AUTHORITY<>'ADMIN'";
 }
 
 

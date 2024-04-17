@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Route(value="", layout = MainLayout.class)
+@Route(value = "", layout = MainLayout.class)
 @PageTitle("Report Bug")
 @PermitAll
 @UIScope
@@ -40,7 +40,7 @@ public class ReportBugView extends VerticalLayout {
 
     private BugForm form;
     private Button submit = new Button(Constants.SUBMIT);
-    private Map<String,Map<String,Map<String,Integer>>> programData;
+    private Map<String, Map<String, Map<String, Integer>>> programData;
     private List<String> reportTypes;
     private List<String> resolutions;
     private List<String> employees;
@@ -61,22 +61,37 @@ public class ReportBugView extends VerticalLayout {
         isUser = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("USER"));
         userRole = Validator.determineUserType(user.getAuthorities().toArray()[0].toString());
         programData = bugReportDao.getProgramData();
-        reportTypes =bugReportDao.getReportTypes();
+        reportTypes = bugReportDao.getReportTypes();
         resolutions = bugReportDao.getResolutions();
-        employees=bugReportDao.getEmployees();
-        form = new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,true);
+        employees = bugReportDao.getEmployees();
+        form = new BugForm(programData, reportTypes, resolutions, employees, isUser, user, userRole, true);
         add(form);
         add(submit);
 
-        submit.addClickListener(click->{
-            try{
+        setSubmitListener(submit);
+    }
+
+    public void refreshForm() {
+        BugForm newForm = new BugForm(programData, reportTypes, resolutions, employees, isUser, user, userRole, true);
+        replace(form, newForm);
+        form = newForm;
+        Button newSubmit = new Button(Constants.SUBMIT);
+        replace(submit, newSubmit);
+        submit = newSubmit;
+        setSubmitListener(submit);
+    }
+
+
+    public void setSubmitListener(Button submitBtn) {
+        submitBtn.addClickListener(click -> {
+            try {
                 BugData bugData = form.getBugData();
-                MultiFileBuffer buffer=null;
+                MultiFileBuffer buffer = null;
                 if (bugData.isAttachments()) {
                     if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
                         Notification.show("Please provide a description for your attachment.");
                         return;
-                    } else{
+                    } else {
                         buffer = form.getMultiFileBuffer();
                         if (buffer.getFiles().isEmpty()) {
                             Notification.show("Please provide an attachment.");
@@ -84,29 +99,25 @@ public class ReportBugView extends VerticalLayout {
                         }
                     }
                 }
-                String errors=null;
-                if((errors = Validator.validateInitialSubmission(bugData)) != null){
+                String errors = null;
+                if ((errors = Validator.validateInitialSubmission(bugData)) != null) {
                     Notification.show(errors);
-                }else{
+                } else {
                     Notification.show("Success");
                     bugData.setBugReportId(bugReportDao.addNewBugReport(bugData));
-                    if(buffer!=null){
-                        awsS3Util.upload(buffer,bugData.getBugReportId());
+                    if (buffer != null) {
+                        awsS3Util.upload(buffer, bugData.getBugReportId());
                     }
                 }
                 refreshForm();
-            } catch (IllegalStateException e){
+            } catch (IllegalStateException e) {
                 e.printStackTrace();
                 Notification.show("Some how you have managed to break my enums. Congrats....");
-            } catch (DataAccessException dataAccessException){
+            } catch (DataAccessException dataAccessException) {
                 dataAccessException.printStackTrace();
                 Notification.show("There was an error submitting your bug report. Please try again later.");
             }
         });
-    }
-    public void refreshForm(){
-        replace(form,new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,true));
-        finishSetup();
     }
 }
 

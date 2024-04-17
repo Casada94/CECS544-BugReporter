@@ -53,37 +53,42 @@ public class AwsS3Util {
     }
 
     public void upload(MultiFileBuffer buffer, Integer key) {
-        try{
-            for(String file: buffer.getFiles()){
+        try {
+            for (String file : buffer.getFiles()) {
                 PutObjectRequest objectRequest = PutObjectRequest.builder()
                         .bucket(bucketName)
-                        .key(key.toString()+"/"+file)
+                        .key(key.toString() + "/" + file)
                         .build();
 
-                s3Client.putObject(objectRequest,buffer.getFileData(file).getFile().toPath());
+                s3Client.putObject(objectRequest, buffer.getFileData(file).getFile().toPath());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public List<String> getFileList(Integer key){
-        return s3Client.listObjects(b->b.bucket(bucketName).prefix(key.toString() + "/"))
+    public List<String> getFileList(Integer key) {
+        return s3Client.listObjects(b -> b.bucket(bucketName).prefix(key.toString() + "/"))
                 .contents()
                 .stream()
                 .map(s3Object -> s3Object.key().split("/")[1])
                 .collect(Collectors.toList());
     }
 
-     public File getFile(String key, String fileName){
-         File file;
-         if ((file =new File(workingDir+fileName)).exists()) {
-             return file;
-         }else {
-             Path path = Paths.get(workingDir+fileName);
-             s3Client.getObject(b->b.bucket(bucketName).key(key +"/"+fileName),path);
-             return path.toFile();
-         }
+    public File getFile(String key, String fileName) {
+        File file;
+        if ((file = new File(workingDir + fileName)).exists()) {
+            return file;
+        } else {
+            Path path = Paths.get(workingDir + fileName);
+            s3Client.getObject(b -> b.bucket(bucketName).key(key + "/" + fileName), path);
+            return path.toFile();
+        }
+    }
+
+    public void deleteAllFiles(String key, List<String> fileNames) {
+        for (String fileName : fileNames)
+            s3Client.deleteObject(b -> b.bucket(bucketName).key(key + "/" + fileName));
     }
 
 }

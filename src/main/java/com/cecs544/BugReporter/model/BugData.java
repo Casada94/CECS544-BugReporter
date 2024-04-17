@@ -32,6 +32,7 @@ public class BugData {
     private Status Status;
     private Integer Priority;
     private Resolution Resolution;
+    private String ResolutionRelease;
     private String ResolutionVersion;
     private String ResolvedBy;
     private Date ResolvedDate;
@@ -66,6 +67,7 @@ public class BugData {
     public Status getStatus() {return Status;}
     public Resolution getResolution() {return Resolution;}
     public Integer getPriority() {return Priority;}
+    public String getResolutionRelease() {return ResolutionRelease;}
     public String getResolutionVersion() {return ResolutionVersion;}
     public String getResolvedBy() {return ResolvedBy;}
     public Date getResolvedDate() {return ResolvedDate;}
@@ -192,6 +194,7 @@ public class BugData {
         }
     }
 
+    public void setResolutionRelease(String ResolutionRelease) {this.ResolutionRelease = ResolutionRelease;}
     public void setResolutionVersion(String ResolutionVersion) {this.ResolutionVersion = ResolutionVersion;}
     public void setResolvedBy(String ResolvedBy) {this.ResolvedBy = ResolvedBy;}
     public void setResolvedDate(Date ResolvedDate) {this.ResolvedDate = ResolvedDate;}

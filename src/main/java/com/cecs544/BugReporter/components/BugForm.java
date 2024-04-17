@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class BugForm extends VerticalLayout{
+public class BugForm extends VerticalLayout {
     private Text name = new Text(Constants.COMPANY_NAME);
     private Text confidential = new Text(Constants.CONFIDENTIAL);
     private Text program = new Text(Constants.PROGRAM);
@@ -45,7 +45,7 @@ public class BugForm extends VerticalLayout{
     private Upload attachmentUpload = new Upload(multiFileBuffer);
     private Checkbox attachments = new Checkbox(Constants.ATTACHMENTS);
     private Select<String> uploadedAttachments = new Select<>();
-    private Button downloadAttachments = new Button(VaadinIcon.DOWNLOAD.create()    );
+    private Button downloadAttachments = new Button(VaadinIcon.DOWNLOAD.create());
     private TextField problemSummaryField = new TextField(Constants.PROBLEM_SUMMARY);
     private Text reproducible = new Text(Constants.REPRODUCIBLE);
     private Checkbox reproducibleCheckbox = new Checkbox();
@@ -59,18 +59,22 @@ public class BugForm extends VerticalLayout{
     private Select<String> status = new Select<>();
     private Select<Integer> priority = new Select<>();
     private Select<String> resolution = new Select<>();
-    private TextField resolutionVersion = new TextField();
+    private Text resolutionRelease = new Text(Constants.RESOLUTION_RELEASE);
+    private Select<String> resolutionReleaseField = new Select<>();
+    private Text resolutionVersion = new Text(Constants.RESOLUTION_VERSION);
+    private Select<String> resolutionVersionField = new Select<>();
     private Select<String> resolvedByField = new Select<>();
     private DatePicker resolvedDatePicker = new DatePicker(Constants.RESOLVED_DATE);
     private Select<String> testedByField = new Select<>();
     private DatePicker testedDatePicker = new DatePicker(Constants.TESTED_DATE);
     private Checkbox deferred = new Checkbox(Constants.TREAT_AS_DEFERRED);
-    private Map<String,Map<String,Map<String,Integer>>> programData;
+    private Map<String, Map<String, Map<String, Integer>>> programData;
     private List<String> reportTypes;
     private List<String> resolutions;
+    private List<String> attachmentsList;
     private boolean initial;
 
-    public BugForm(Map<String,Map<String,Map<String,Integer>>> pData, List<String>rTypes,List<String>resolutionsFromDb,List<String>employees, boolean isUser, UserDetails user, Role userRole,boolean isInitial){
+    public BugForm(Map<String, Map<String, Map<String, Integer>>> pData, List<String> rTypes, List<String> resolutionsFromDb, List<String> employees, boolean isUser, UserDetails user, Role userRole, boolean isInitial) {
         setWidth("750px");
         setAlignItems(FlexComponent.Alignment.CENTER);
         programData = pData;
@@ -84,7 +88,7 @@ public class BugForm extends VerticalLayout{
         releaseField.setReadOnly(true);
         versionField.setReadOnly(true);
 
-        if(initial){
+        if (initial) {
             attachmentUpload.setVisible(false);
             uploadedAttachments.setVisible(false);
             downloadAttachments.setVisible(false);
@@ -166,7 +170,7 @@ public class BugForm extends VerticalLayout{
         HorizontalLayout horizontalLayout5 = new HorizontalLayout();
         horizontalLayout5.setWidthFull();
         horizontalLayout5.setAlignItems(FlexComponent.Alignment.START);
-        horizontalLayout5.add(reproducible,reproducibleCheckbox);
+        horizontalLayout5.add(reproducible, reproducibleCheckbox);
         add(horizontalLayout5);
 
         problemDescAndReproduceField.setWidthFull();
@@ -214,7 +218,7 @@ public class BugForm extends VerticalLayout{
             status.setItems(new ListDataProvider<>(Constants.statuses));
             priority.setLabel(Constants.PRIORITY);
             priority.setItems(new ListDataProvider<>(Constants.priorities));
-            horizontalLayout12.add(status,priority);
+            horizontalLayout12.add(status, priority);
             add(horizontalLayout12);
 
             HorizontalLayout horizontalLayout16 = new HorizontalLayout();
@@ -222,8 +226,17 @@ public class BugForm extends VerticalLayout{
             horizontalLayout16.setJustifyContentMode(FlexComponent.JustifyContentMode.EVENLY);
             resolution.setLabel(Constants.RESOLUTION);
             resolution.setItems(new ListDataProvider<>(resolutions));
-            resolutionVersion.setLabel(Constants.RESOLUTION_VERSION);
-            horizontalLayout16.add(resolution,resolutionVersion);
+
+            resolutionReleaseField.setWidth("75px");
+            resolutionVersionField.setWidth("75px");
+            HorizontalLayout releaseLayout2 = new HorizontalLayout(resolutionRelease, resolutionReleaseField);
+            releaseLayout2.setAlignItems(FlexComponent.Alignment.CENTER);
+            horizontalLayout16.add(releaseLayout2);
+            HorizontalLayout versionLayout2 = new HorizontalLayout(resolutionVersion, resolutionVersionField);
+            horizontalLayout16.add(versionLayout2);
+            versionLayout2.setAlignItems(FlexComponent.Alignment.CENTER);
+            horizontalLayout2.setAlignItems(FlexComponent.Alignment.CENTER);
+            horizontalLayout16.add(resolution, releaseLayout2, versionLayout2);
             add(horizontalLayout16);
 
             HorizontalLayout horizontalLayout13 = new HorizontalLayout();
@@ -232,7 +245,7 @@ public class BugForm extends VerticalLayout{
             resolvedByField.setWidth(Constants.NAME_FIELD_WIDTH);
             resolvedByField.setLabel(Constants.RESOLVED_BY);
             resolvedByField.setItems(new ListDataProvider<>(employees));
-            horizontalLayout13.add(resolvedByField,resolvedDatePicker);
+            horizontalLayout13.add(resolvedByField, resolvedDatePicker);
             add(horizontalLayout13);
 
             HorizontalLayout horizontalLayout14 = new HorizontalLayout();
@@ -241,7 +254,7 @@ public class BugForm extends VerticalLayout{
             testedByField.setLabel(Constants.TESTED_BY);
             testedByField.setItems(new ListDataProvider<>(employees));
             testedByField.setWidth(Constants.NAME_FIELD_WIDTH);
-            horizontalLayout14.add(testedByField,testedDatePicker);
+            horizontalLayout14.add(testedByField, testedDatePicker);
             add(horizontalLayout14);
 
             HorizontalLayout horizontalLayout15 = new HorizontalLayout();
@@ -250,44 +263,46 @@ public class BugForm extends VerticalLayout{
             horizontalLayout15.add(deferred);
             add(horizontalLayout15);
 
-            if(userRole == Role.USER){
+            if (userRole == Role.USER) {
                 programField.setReadOnly(true);
                 releaseField.setReadOnly(true);
                 versionField.setReadOnly(true);
                 reportType.setReadOnly(true);
                 severity.setReadOnly(true);
-            }else if (userRole == Role.EMPLOYEE){
+            } else if (userRole == Role.EMPLOYEE) {
                 programField.setReadOnly(true);
                 releaseField.setReadOnly(true);
                 versionField.setReadOnly(true);
                 reportType.setReadOnly(true);
                 priority.setReadOnly(true);
                 assignedToField.setReadOnly(true);
-            }else if(userRole == Role.MANAGER){
+            } else if (userRole == Role.MANAGER) {
                 programField.setReadOnly(true);
                 releaseField.setReadOnly(true);
                 versionField.setReadOnly(true);
                 reportType.setReadOnly(true);
             }
-        }else {
-            if (userRole == Role.EMPLOYEE){
+        } else {
+            if (userRole == Role.EMPLOYEE) {
                 priority.setReadOnly(true);
                 assignedToField.setReadOnly(true);
             }
         }
 
-        programField.addValueChangeListener(event ->{
+        programField.addValueChangeListener(event -> {
             List<String> releaseList = new ArrayList<>(programData.get(programField.getValue()).keySet());
             Collections.sort(releaseList);
             releaseField.setItems(new ListDataProvider<>(releaseList));
+            resolutionReleaseField.setItems(new ListDataProvider<>(releaseList));
             if (initial || userRole == Role.ADMIN) {
                 releaseField.setReadOnly(false);
             }
         });
-        releaseField.addValueChangeListener(event ->{
+        releaseField.addValueChangeListener(event -> {
             List<String> versionsList = new ArrayList<>(programData.get(programField.getValue()).get(releaseField.getValue()).keySet());
             Collections.sort(versionsList);
             versionField.setItems(new ListDataProvider<>(versionsList));
+            resolutionVersionField.setItems(new ListDataProvider<>(versionsList));
             if (initial || userRole == Role.ADMIN) {
                 versionField.setReadOnly(false);
             }
@@ -295,7 +310,7 @@ public class BugForm extends VerticalLayout{
 
     }
 
-    public BugData getBugData(){
+    public BugData getBugData() {
         BugData bugData = new BugData();
         bugData.setBugReportId(problemNumberField.getValue());
         bugData.setProgramName(programField.getValue());
@@ -318,7 +333,8 @@ public class BugForm extends VerticalLayout{
         bugData.setStatus(status.getValue());
         bugData.setPriority(priority.getValue());
         bugData.setResolution(resolution.getValue());
-        bugData.setResolutionVersion(resolutionVersion.getValue());
+        bugData.setResolutionVersion(resolutionVersionField.getValue());
+        bugData.setResolutionRelease(resolutionReleaseField.getValue());
         bugData.setResolvedBy(resolvedByField.getValue());
         bugData.setResolvedDate(Validator.nullOrDate(resolvedDatePicker.getValue()));
         bugData.setTestedBy(testedByField.getValue());
@@ -327,7 +343,7 @@ public class BugForm extends VerticalLayout{
         return bugData;
     }
 
-    public void updateForm(BugData bugData){
+    public void updateForm(BugData bugData) {
         problemNumberField.setValue(bugData.getBugReportId());
         programField.setValue(bugData.getProgramName());
         releaseField.setValue(bugData.getRelease());
@@ -348,54 +364,66 @@ public class BugForm extends VerticalLayout{
         status.setValue(Validator.emptyIfNull(bugData.getStatus().getStatus()));
         priority.setValue(bugData.getPriority());
         resolution.setValue(Validator.emptyIfNull(bugData.getResolution().getResolution()));
-        resolutionVersion.setValue(Validator.emptyIfNull(bugData.getResolutionVersion()));
+        resolutionReleaseField.setValue(Validator.emptyIfNull(bugData.getResolutionRelease()));
+        resolutionVersionField.setValue(Validator.emptyIfNull(bugData.getResolutionVersion()));
         resolvedByField.setValue(Validator.nullOrString(bugData.getResolvedBy()));
-        if(bugData.getResolvedDate() != null)
+        if (bugData.getResolvedDate() != null)
             resolvedDatePicker.setValue(bugData.getResolvedDate().toLocalDate());
         testedByField.setValue(Validator.nullOrString(bugData.getTestedBy()));
-        if(bugData.getTestedDate() != null)
+        if (bugData.getTestedDate() != null)
             testedDatePicker.setValue(bugData.getTestedDate().toLocalDate());
         deferred.setValue(bugData.getTreatAsDeferred());
 
         attachmentUpload.clearFileList();
     }
 
-    public void configureUpload(){
+    public void configureUpload() {
         attachmentUpload.setAcceptedFileTypes("image/jpeg", "image/png", "application/pdf", "application/txt");
-        attachmentUpload.setMaxFileSize(10*1024*1024);
+        attachmentUpload.setMaxFileSize(10 * 1024 * 1024);
 
-        attachmentUpload.addFileRejectedListener(event->{
+        attachmentUpload.addFileRejectedListener(event -> {
             String errorMessage = event.getErrorMessage();
-            Notification.show(errorMessage,5000, Notification.Position.MIDDLE);
+            Notification.show(errorMessage, 5000, Notification.Position.MIDDLE);
         });
 
     }
 
-    public MultiFileBuffer getMultiFileBuffer(){
-        if(attachments.getValue() && initial){
-            if(multiFileBuffer.getFiles().isEmpty()){
-                Notification.show("Please select a file to upload",5000, Notification.Position.MIDDLE);
+    public MultiFileBuffer getMultiFileBuffer() {
+        if (attachments.getValue() && initial) {
+            if (multiFileBuffer.getFiles().isEmpty()) {
+                Notification.show("Please select a file to upload", 5000, Notification.Position.MIDDLE);
                 throw new IllegalStateException("No file selected");
             }
         }
         return multiFileBuffer;
     }
-    public void setUploadList(List<String> list){
+
+    public void setUploadList(List<String> list) {
+        this.attachmentsList = list;
         uploadedAttachments.setItems(new ListDataProvider<>(list));
     }
-    public Select<String> getUploadAttachmentSelect(){
+
+    public Select<String> getUploadAttachmentSelect() {
         return uploadedAttachments;
     }
-    public Button getDownloadAttachmentsButton(){
+
+    public boolean attachmentListIsEmpty() {
+        return attachmentsList.isEmpty();
+    }
+
+    public Button getDownloadAttachmentsButton() {
         return downloadAttachments;
     }
-    public String getBugReportId(){
+
+    public String getBugReportId() {
         return problemNumberField.getValue().toString();
     }
-    public boolean hasAttachments(){
+
+    public boolean hasAttachments() {
         return attachments.getValue();
     }
-    public boolean isInitialSubmission(){
+
+    public boolean isInitialSubmission() {
         return initial;
     }
 }

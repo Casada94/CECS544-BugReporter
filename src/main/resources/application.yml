@@ -9,7 +9,7 @@ spring:
       key-store-password: sE0/c+PG8GvBvUx+h3LGae/+E3MptoILayZ4oXV4K1NRYAXNXAxNpWZBAsRlavfQ
 
       key-store-type: JKS
-
+  workingDir: src/main/resources/tmp/bugReport
   crypto:
     key: claytonsKey
 

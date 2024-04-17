@@ -38,9 +38,15 @@ public class ReportBugView extends VerticalLayout {
     @Autowired
     private AwsS3Util awsS3Util;
 
-    private Validator dataValidator = new Validator();
-
+    private BugForm form;
     private Button submit = new Button(Constants.SUBMIT);
+    private Map<String,Map<String,Map<String,Integer>>> programData;
+    private List<String> reportTypes;
+    private List<String> resolutions;
+    private List<String> employees;
+    UserDetails user;
+    boolean isUser;
+    Role userRole;
 
     public ReportBugView() {
         addClassName("ReportBugView");
@@ -50,14 +56,14 @@ public class ReportBugView extends VerticalLayout {
 
     @PostConstruct
     public void finishSetup() {
-        BugForm form;
-        UserDetails user = securityService.getAuthenticatedUser();
-        boolean isUser = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("USER"));
-        Role userRole = Validator.determineUserType(user.getAuthorities().toArray()[0].toString());
-        Map<String,Map<String,Map<String,Integer>>> programData = bugReportDao.getProgramData();
-        List<String> reportTypes = bugReportDao.getReportTypes();
-        List<String> resolutions = bugReportDao.getResolutions();
-        List<String> employees = bugReportDao.getEmployees();
+
+        user = securityService.getAuthenticatedUser();
+        isUser = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("USER"));
+        userRole = Validator.determineUserType(user.getAuthorities().toArray()[0].toString());
+        programData = bugReportDao.getProgramData();
+        reportTypes =bugReportDao.getReportTypes();
+        resolutions = bugReportDao.getResolutions();
+        employees=bugReportDao.getEmployees();
         form = new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,true);
         add(form);
         add(submit);
@@ -72,14 +78,14 @@ public class ReportBugView extends VerticalLayout {
                         return;
                     } else{
                         buffer = form.getMultiFileBuffer();
-                        if (buffer.getFiles().size()==0) {
+                        if (buffer.getFiles().isEmpty()) {
                             Notification.show("Please provide an attachment.");
                             return;
                         }
                     }
                 }
                 String errors=null;
-                if((errors = dataValidator.validateInitialSubmission(bugData)) != null){
+                if((errors = Validator.validateInitialSubmission(bugData)) != null){
                     Notification.show(errors);
                 }else{
                     Notification.show("Success");
@@ -88,6 +94,7 @@ public class ReportBugView extends VerticalLayout {
                         awsS3Util.upload(buffer,bugData.getBugReportId());
                     }
                 }
+                refreshForm();
             } catch (IllegalStateException e){
                 e.printStackTrace();
                 Notification.show("Some how you have managed to break my enums. Congrats....");
@@ -96,6 +103,10 @@ public class ReportBugView extends VerticalLayout {
                 Notification.show("There was an error submitting your bug report. Please try again later.");
             }
         });
+    }
+    public void refreshForm(){
+        replace(form,new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,true));
+        finishSetup();
     }
 }
 

@@ -13,12 +13,15 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
@@ -27,12 +30,17 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.spring.annotation.UIScope;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,15 +64,21 @@ public class BugReportView extends VerticalLayout {
     private Button update = new Button(Constants.UPDATE);
     private Button refreshButton = new Button(new Icon(VaadinIcon.REFRESH));
     private List<BugData> reports;
+    private Select<String> uploadAttachment;
+    private Button downloadButton;
+    private Map<String,Map<String,Map<String,Integer>>> programData;
+    private List<String> reportTypes;
+    private List<String> resolutions;
+    private List<String> employees;
+    UserDetails user;
+    boolean isUser;
+    Role userRole;
 
     public BugReportView() {
         addClassName("ReportBugView");
         setAlignItems(Alignment.CENTER);
         add(new H1("Review Bug Reports"));
         add(refreshButton);
-
-        add(grid);
-
 
         update.addClickListener(click->{
             BugData bugData = bugForm.getBugData();
@@ -75,7 +89,7 @@ public class BugReportView extends VerticalLayout {
                     return;
                 } else{
                     buffer = bugForm.getMultiFileBuffer();
-                    if (buffer.getFiles().size()==0) {
+                    if (buffer.getFiles().isEmpty() && bugForm.isInitialSubmission()) {
                         Notification.show("Please provide an attachment.");
                         return;
                     }
@@ -86,22 +100,26 @@ public class BugReportView extends VerticalLayout {
                 awsS3Util.upload(buffer,bugData.getBugReportId());
             }
             reports.set(reports.indexOf(bugData),bugData);
+            Notification.show("Bug Report Updated",5000, Notification.Position.MIDDLE);
         });
 
         grid.addItemClickListener(item->{
             tabSheet.setVisible(true);
             update.setVisible(true);
             bugForm.updateForm(item.getItem());
+            if(bugForm.hasAttachments())
+                bugForm.setUploadList(awsS3Util.getFileList(item.getItem().getBugReportId()));
         });
+
 
 
     }
 
     @PostConstruct
     private void finsihSetup(){
-        UserDetails user = securityService.getAuthenticatedUser();
-        boolean isUser = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("USER"));
-        Role userRole = Validator.determineUserType(user.getAuthorities().toArray()[0].toString());
+        user = securityService.getAuthenticatedUser();
+        isUser = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("USER"));
+        userRole = Validator.determineUserType(user.getAuthorities().toArray()[0].toString());
         reports = new ArrayList<>();
         reports = bugReportDao.getBugReports(securityService.getAuthenticatedUser().getUsername(),isUser);
 //        grid.setItems(new ListDataProvider<>(reports));
@@ -111,13 +129,19 @@ public class BugReportView extends VerticalLayout {
         grid.setSelectionMode(Grid.SelectionMode.SINGLE);
         grid.setHeight("500px");
         grid.setWidthFull();
+        add(grid);
 
-        Map<String,Map<String,Map<String,Integer>>> programData = bugReportDao.getProgramData();
-        List<String> reportTypes = bugReportDao.getReportTypes();
-        List<String> resolutions = bugReportDao.getResolutions();
-        List<String> employees = bugReportDao.getEmployees();
+        programData = bugReportDao.getProgramData();
+        reportTypes = bugReportDao.getReportTypes();
+        resolutions = bugReportDao.getResolutions();
+        employees = bugReportDao.getEmployees();
         bugForm = new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,false);
-        tabSheet.add("Bug Report",bugForm);
+        uploadAttachment = bugForm.getUploadAttachmentSelect();
+        downloadButton = bugForm.getDownloadAttachmentsButton();
+        downloadClickListener(downloadButton);
+
+
+        tabSheet.add("Bug Report",new Tab(bugForm)) ;
         tabSheet.setVisible(false);
         update.setVisible(false);
         tabSheet.setWidthFull();
@@ -127,16 +151,16 @@ public class BugReportView extends VerticalLayout {
 
         refreshButton.addClickListener(click->{
             reports = bugReportDao.getBugReports(securityService.getAuthenticatedUser().getUsername(),isUser);
+            refreshForm();
             grid.setItems(new ListDataProvider<>(reports));
         });
-
 
     }
 
     private void configureGrid(boolean isUser, List<BugData> reports){
         grid.addClassName("BugData");
         grid.setSizeFull();
-        if (!isUser) {
+        if (isUser) {
             grid.setColumns("bugReportId","programName","release","version","reportType",
                     "severity","attachments","attachmentDesc","problemSummary","reproducible",
                     "problemDescription","suggestedFix","reportedBy","reportedDate",
@@ -170,6 +194,44 @@ public class BugReportView extends VerticalLayout {
 
 
 
+    }
+
+    private void refreshForm(){
+        tabSheet.setVisible(false);
+        update.setVisible(false);
+        bugForm = new BugForm(programData,reportTypes,resolutions,employees,isUser,user,userRole,false);
+        uploadAttachment = bugForm.getUploadAttachmentSelect();
+        downloadButton = bugForm.getDownloadAttachmentsButton();
+        downloadButton.setId("downloadButton");
+        downloadClickListener(downloadButton);
+        replace(tabSheet,new Tab(bugForm));
+    }
+    private InputStream getStream(File file) {
+        FileInputStream stream = null;
+        try {
+            stream = new FileInputStream(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return stream;
+    }
+    private void downloadClickListener(Button downButton){
+        downButton.addClickListener(click->{
+            System.out.println("Download Button Clicked");
+            if (uploadAttachment.getValue().isEmpty()) {
+                Notification.show("Please select a file to download");
+                return;
+            }
+            File file = awsS3Util.getFile(bugForm.getBugReportId(),uploadAttachment.getValue());
+            StreamResource streamResource = new StreamResource(file.getName(), () -> getStream(file));
+            Anchor link = new Anchor(streamResource, String.format("%s (%d KB)", file.getName(),
+                    (int) file.length() / 1024));
+            link.getElement().setAttribute("download", true);
+            this.add(link);
+            link.getElement().callJsFunction("click");
+            System.out.println("Download Button EXIT");
+        });
     }
     private static Component createFilterHeader(String labelText,
                                                 Consumer<String> filterChangeConsumer) {

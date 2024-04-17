@@ -12,10 +12,13 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Object;
 
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AwsS3Util {
@@ -31,6 +34,8 @@ public class AwsS3Util {
     private String accessKey;
     @Value("${spring.aws.s3.secretKey}")
     private String secretKey;
+    @Value("${spring.workingDir}")
+    private String workingDir;
 
     private S3Client s3Client;
 
@@ -61,8 +66,24 @@ public class AwsS3Util {
             e.printStackTrace();
         }
     }
-    public List<S3Object> getFileList(Integer key){
-        return s3Client.listObjects(b->b.bucket(bucketName).prefix(key.toString())).contents();
+
+    public List<String> getFileList(Integer key){
+        return s3Client.listObjects(b->b.bucket(bucketName).prefix(key.toString() + "/"))
+                .contents()
+                .stream()
+                .map(s3Object -> s3Object.key().split("/")[1])
+                .collect(Collectors.toList());
+    }
+
+     public File getFile(String key, String fileName){
+         File file;
+         if ((file =new File(workingDir+fileName)).exists()) {
+             return file;
+         }else {
+             Path path = Paths.get(workingDir+fileName);
+             s3Client.getObject(b->b.bucket(bucketName).key(key +"/"+fileName),path);
+             return path.toFile();
+         }
     }
 
 }

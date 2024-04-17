@@ -5,8 +5,10 @@ import com.cecs544.BugReporter.model.BugData;
 import com.cecs544.BugReporter.util.Constants;
 import com.cecs544.BugReporter.util.Validator;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -38,10 +40,12 @@ public class BugForm extends VerticalLayout{
     private IntegerField problemNumberField = new IntegerField();
     private Select<String> reportType = new Select<>();
     private Select<String> severity = new Select<>();
-    private TextField ifYesDescribeField = new TextField(Constants.IF_YES_DESCRIBE);
+    private TextArea ifYesDescribeField = new TextArea(Constants.IF_YES_DESCRIBE);
     private MultiFileBuffer multiFileBuffer = new MultiFileBuffer();
     private Upload attachmentUpload = new Upload(multiFileBuffer);
     private Checkbox attachments = new Checkbox(Constants.ATTACHMENTS);
+    private Select<String> uploadedAttachments = new Select<>();
+    private Button downloadAttachments = new Button(VaadinIcon.DOWNLOAD.create()    );
     private TextField problemSummaryField = new TextField(Constants.PROBLEM_SUMMARY);
     private Text reproducible = new Text(Constants.REPRODUCIBLE);
     private Checkbox reproducibleCheckbox = new Checkbox();
@@ -61,16 +65,18 @@ public class BugForm extends VerticalLayout{
     private Select<String> testedByField = new Select<>();
     private DatePicker testedDatePicker = new DatePicker(Constants.TESTED_DATE);
     private Checkbox deferred = new Checkbox(Constants.TREAT_AS_DEFERRED);
-    private final Map<String,Map<String,Map<String,Integer>>> programData;
-    private final List<String> reportTypes;
-    private final List<String> resolutions;
+    private Map<String,Map<String,Map<String,Integer>>> programData;
+    private List<String> reportTypes;
+    private List<String> resolutions;
+    private boolean initial;
 
-    public BugForm(Map<String,Map<String,Map<String,Integer>>> pData, List<String>rTypes,List<String>resolutionsFromDb,List<String>employees, boolean isUser, UserDetails user, Role userRole,boolean initial){
+    public BugForm(Map<String,Map<String,Map<String,Integer>>> pData, List<String>rTypes,List<String>resolutionsFromDb,List<String>employees, boolean isUser, UserDetails user, Role userRole,boolean isInitial){
         setWidth("750px");
         setAlignItems(FlexComponent.Alignment.CENTER);
         programData = pData;
         reportTypes = rTypes;
         resolutions = resolutionsFromDb;
+        initial = isInitial;
 
         problemNumberField.setReadOnly(true);
         reportedByField.setReadOnly(true);
@@ -80,6 +86,8 @@ public class BugForm extends VerticalLayout{
 
         if(initial){
             attachmentUpload.setVisible(false);
+            uploadedAttachments.setVisible(false);
+            downloadAttachments.setVisible(false);
             ifYesDescribeField.setVisible(false);
             attachments.addValueChangeListener(event -> {
                 if (attachments.getValue()) {
@@ -138,9 +146,17 @@ public class BugForm extends VerticalLayout{
         attachmentHorizontalLayout.setWidthFull();
         attachmentHorizontalLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
         attachmentHorizontalLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.EVENLY);
-        attachmentHorizontalLayout.add(attachments);
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.setWidth("300px");
+        verticalLayout.add(attachments);
+        HorizontalLayout horizontalLayoutDownload = new HorizontalLayout();
+        horizontalLayoutDownload.add(uploadedAttachments);
+        horizontalLayoutDownload.add(downloadAttachments);
+        verticalLayout.add(horizontalLayoutDownload);
+        attachmentHorizontalLayout.add(verticalLayout);
         attachmentHorizontalLayout.add(attachmentUpload);
         ifYesDescribeField.setWidth("400px");
+        ifYesDescribeField.setHeight("100px");
         attachmentHorizontalLayout.add(ifYesDescribeField);
         add(attachmentHorizontalLayout);
 
@@ -327,23 +343,25 @@ public class BugForm extends VerticalLayout{
         reportedByField.setValue(bugData.getReportedBy());
         reportedDateField.setValue(bugData.getReportedDate().toLocalDate());
         functionalAreaField.setValue(Validator.emptyIfNull(bugData.getFunctionalArea()));
-        assignedToField.setValue(Validator.emptyIfNull(bugData.getAssignedTo()));
+        assignedToField.setValue(Validator.nullOrString(bugData.getAssignedTo()));
         commentsField.setValue(Validator.emptyIfNull(bugData.getComments()));
         status.setValue(Validator.emptyIfNull(bugData.getStatus().getStatus()));
         priority.setValue(bugData.getPriority());
         resolution.setValue(Validator.emptyIfNull(bugData.getResolution().getResolution()));
         resolutionVersion.setValue(Validator.emptyIfNull(bugData.getResolutionVersion()));
-        resolvedByField.setValue(Validator.emptyIfNull(bugData.getResolvedBy()));
+        resolvedByField.setValue(Validator.nullOrString(bugData.getResolvedBy()));
         if(bugData.getResolvedDate() != null)
             resolvedDatePicker.setValue(bugData.getResolvedDate().toLocalDate());
-        testedByField.setValue(Validator.emptyIfNull(bugData.getTestedBy()));
+        testedByField.setValue(Validator.nullOrString(bugData.getTestedBy()));
         if(bugData.getTestedDate() != null)
             testedDatePicker.setValue(bugData.getTestedDate().toLocalDate());
         deferred.setValue(bugData.getTreatAsDeferred());
+
+        attachmentUpload.clearFileList();
     }
 
     public void configureUpload(){
-        attachmentUpload.setAcceptedFileTypes("image/jpeg", "image/png", "application/pdf");
+        attachmentUpload.setAcceptedFileTypes("image/jpeg", "image/png", "application/pdf", "application/txt");
         attachmentUpload.setMaxFileSize(10*1024*1024);
 
         attachmentUpload.addFileRejectedListener(event->{
@@ -354,16 +372,30 @@ public class BugForm extends VerticalLayout{
     }
 
     public MultiFileBuffer getMultiFileBuffer(){
-        if(attachments.getValue()){
-            if(multiFileBuffer.getFiles().size() == 0){
+        if(attachments.getValue() && initial){
+            if(multiFileBuffer.getFiles().isEmpty()){
                 Notification.show("Please select a file to upload",5000, Notification.Position.MIDDLE);
                 throw new IllegalStateException("No file selected");
-            }else {
-                for(String file: multiFileBuffer.getFiles()){
-//                    awsS3Util.uploadFile(file);
-                }
             }
         }
         return multiFileBuffer;
+    }
+    public void setUploadList(List<String> list){
+        uploadedAttachments.setItems(new ListDataProvider<>(list));
+    }
+    public Select<String> getUploadAttachmentSelect(){
+        return uploadedAttachments;
+    }
+    public Button getDownloadAttachmentsButton(){
+        return downloadAttachments;
+    }
+    public String getBugReportId(){
+        return problemNumberField.getValue().toString();
+    }
+    public boolean hasAttachments(){
+        return attachments.getValue();
+    }
+    public boolean isInitialSubmission(){
+        return initial;
     }
 }

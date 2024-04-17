@@ -62,6 +62,6 @@ public class Validator {
         return str == null ? Constants.EMPTY : str;
     }
     public static String nullOrString(String input){
-        return input.isEmpty() ? null : input;
+        return input==null ? null : input.isEmpty() ? null : input;
     }
 }

@@ -1,9 +1,13 @@
 package com.cecs544.BugReporter.util;
 
 import com.cecs544.BugReporter.enums.Role;
+import com.cecs544.BugReporter.model.Account;
 import com.cecs544.BugReporter.model.BugData;
+import com.cecs544.BugReporter.model.Program;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 public class Validator {
 
@@ -66,5 +70,49 @@ public class Validator {
 
     public static String nullOrString(String input) {
         return input == null ? null : input.isEmpty() ? null : input;
+    }
+
+    public static String validAccount(Account account) {
+        StringBuilder errorMessage = new StringBuilder();
+
+        if (account.getUSERNAME() == null || account.getUSERNAME().isBlank()) {
+            errorMessage.append("USERNAME is required. ");
+        }
+        if (account.getFIRST_NAME() == null || account.getFIRST_NAME().isBlank()) {
+            errorMessage.append("First Name is required. ");
+        }
+        if (account.getLAST_NAME() == null || account.getLAST_NAME().isBlank()) {
+            errorMessage.append("Last Name is required. ");
+        }
+        if (account.getAUTHORITY() == null || account.getAUTHORITY().isBlank()) {
+            errorMessage.append("AUTHORITY is required. ");
+        }
+
+        return errorMessage.toString();
+    }
+
+    public static String validProgram(Program program) {
+        StringBuilder errorMessage = new StringBuilder();
+
+        if (program.getNAME() == null || program.getNAME().isEmpty()) {
+            errorMessage.append("Program Name is required. ");
+        }
+        Map<String, Map<String, List<String>>> releaseVersionFunctionMap = program.getReleaseVersionFunctionMap();
+        for(String key: releaseVersionFunctionMap.keySet()) {
+            Map<String, List<String>> versionFunctionMap = releaseVersionFunctionMap.get(key);
+            if(versionFunctionMap.isEmpty()){
+                errorMessage.append("Version(s) for " + key + " are required. ");
+            }else{
+                for(String version : versionFunctionMap.keySet()) {
+                    List<String> functions = versionFunctionMap.get(version);
+                    if(functions.isEmpty()) {
+                        errorMessage.append("Function(s) are required. ");
+                    }
+                }
+            }
+
+        }
+
+        return errorMessage.toString();
     }
 }

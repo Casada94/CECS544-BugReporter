@@ -10,6 +10,7 @@ spring:
 
       key-store-type: JKS
   workingDir: src/main/resources/tmp/bugReport
+  roles: ADMIN,USER,EMPLOYEE,MANAGER
   crypto:
     key: claytonsKey
 

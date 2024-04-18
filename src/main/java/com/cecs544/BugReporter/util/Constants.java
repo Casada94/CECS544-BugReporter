@@ -89,6 +89,12 @@ public class Constants {
     public static final List<String> statuses = new ArrayList<>(List.of(new String[]{OPEN, CLOSED}));
 
     public static final String QUERY_USERNAME = "username";
+    public static final String QUERY_PASSWORD = "password";
+    public static final String QUERY_FIRST_NAME = "firstName";
+    public static final String QUERY_LAST_NAME = "lastName";
+    public static final String QUERY_ENABLED = "enabled";
+    public static final String QUERY_AUTHORITY = "authority";
+    public static final String QUERY_PASSWORD_CHANGE_REQUIRED = "passwordChangeRequired";
     public static final String QUERY_BUG_REPORT_ID = "bugReportId";
     public static final String QUERY_PROGRAM_ID = "programId";
     public static final String QUERY_REPORT_TYPE = "reportType";
@@ -141,6 +147,12 @@ public class Constants {
     public static final String COLUMN_TESTED_DATE = "TESTED_DATE";
     public static final String COLUMN_TREAT_AS_DEFERRED = "TREAT_AS_DEFERRED";
     public static final String COLUMN_PROGRAM_ID = "ID";
+    public static final String COLUMN_AUTHORITY = "AUTHORITY";
+    public static final String COLUMN_FIRST_NAME = "FIRST_NAME";
+    public static final String COLUMN_LAST_NAME = "LAST_NAME";
+    public static final String COLUMN_PASSWORD_CHANGE_REQUIRED = "PASSWORD_CHANGE_REQUIRED";
+    public static final String COLUMN_USERNAME = "USERNAME";
+    public static final String COLUMN_ENABLED = "ENABLED";
 
     public static final String INSERT_NEW_BUG_REPORT = "INSERT INTO BUG_REPORTS(PROGRAM_ID,REPORT_TYPE,SEVERITY,ATTACHMENTS,ATTACHMENT_DESC,PROBLEM_SUMMARY,REPRODUCIBLE,PROBLEM_DESCRIPTION,SUGGESTED_FIX,REPORTED_BY,REPORTED_DATE,FUNCTIONAL_AREA,ASSIGNED_TO,COMMENTS,STATUS,PRIORITY,RESOLUTION,RESOLUTION_VERSION,RESOLVED_BY,RESOLVED_DATE,TESTED_BY,TESTED_DATE,TREAT_AS_DEFERRED)\n" +
             "VALUES (:programId,:reportType,:severity,:attachments,:attachmentDesc,:problemSummary,:reproducible,:problemDescription,:suggestedFix,:reportedBy,:reportedDate,:functionalArea,:assignedTo,:comments,:status,:priority,:resolution,:resolutionId,:resolvedBy,:resolvedDate,:testedBy,:testedDate,:treatAsDeferred);";
@@ -174,9 +186,11 @@ public class Constants {
     public static final String GET_EMPLOYEES = "SELECT USERNAME FROM ACCOUNTS WHERE AUTHORITY<>'USER' AND AUTHORITY<>'ADMIN'";
     public static final String PASSWORD_CHANGE_REQUIRED = "SELECT PASSWORD_CHANGE_REQUIRED FROM ACCOUNTS WHERE USERNAME=?";
     public static final String CHANGE_PASSWORD = "UPDATE ACCOUNTS SET PASSWORD_CHANGE_REQUIRED=0,PASSWORD=? WHERE USERNAME=?";
-
-
-
+    public static final String GET_ACCOUNTS = "SELECT * FROM ACCOUNTS";
+    public static final String INSERT_ACCOUNT = "INSERT INTO ACCOUNTS(USERNAME,PASSWORD,FIRST_NAME,LAST_NAME,ENABLED,AUTHORITY,PASSWORD_CHANGE_REQUIRED) VALUES(:username,:password,:firstName,:lastName,TRUE,:authority,TRUE)";
+    public static final String UPDATE_ACCOUNT = "UPDATE ACCOUNTS SET FIRST_NAME=:firstName,LAST_NAME=:lastName,ENABLED=:enabled,AUTHORITY=:authority WHERE USERNAME=:username";
+    public static final String DELETE_ACCOUNT = "DELETE FROM ACCOUNTS WHERE USERNAME=:username";
+    public static final String GET_PROGRAMS = "SELECT * FROM PROGRAMS";
 }
 
 

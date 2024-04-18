@@ -30,4 +30,5 @@ public class SecurityService {
                 VaadinServletRequest.getCurrent().getHttpServletRequest(), null,
                 null);
     }
+
 }

@@ -1,6 +1,8 @@
 package com.cecs544.BugReporter.dao;
 
+import com.cecs544.BugReporter.model.Account;
 import com.cecs544.BugReporter.model.BugData;
+import com.cecs544.BugReporter.model.Program;
 import com.cecs544.BugReporter.util.Constants;
 import com.cecs544.BugReporter.util.Validator;
 import com.vaadin.flow.component.notification.Notification;
@@ -15,6 +17,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,6 +175,70 @@ public class BugReportDao {
     }
     public void changePassword(String username, String newPassword) {
         jdbcTemplate.update(Constants.CHANGE_PASSWORD, newPassword, username);
+    }
+    public List<Account> getAccounts() {
+        return jdbcTemplate.query(Constants.GET_ACCOUNTS, (rs, rowNum) -> {
+            Account account = new Account();
+            account.setUSERNAME(rs.getString(Constants.COLUMN_USERNAME));
+            account.setFIRST_NAME(rs.getString(Constants.COLUMN_FIRST_NAME));
+            account.setLAST_NAME(rs.getString(Constants.COLUMN_LAST_NAME));
+            account.setAUTHORITY(rs.getString(Constants.COLUMN_AUTHORITY));
+            account.setENABLED(rs.getBoolean(Constants.COLUMN_ENABLED));
+            account.setPASSWORD_CHANGE_REQUIRED(rs.getBoolean(Constants.COLUMN_PASSWORD_CHANGE_REQUIRED));
+            return account;
+        });
+    }
+    public void addAccount(Account account) {
+        Map<String,Object> params = new HashMap<>();
+        params.put(Constants.QUERY_FIRST_NAME, account.getFIRST_NAME());
+        params.put(Constants.QUERY_LAST_NAME, account.getLAST_NAME());
+        params.put(Constants.QUERY_PASSWORD, account.getPASSWORD());
+        params.put(Constants.QUERY_AUTHORITY, account.getAUTHORITY());
+        params.put(Constants.QUERY_USERNAME, account.getUSERNAME());
+        namedParamJdbcTemplate.update(Constants.INSERT_ACCOUNT, params);
+    }
+
+    public void updateAccount(Account account) {
+        Map<String,Object> params = new HashMap<>();
+        params.put(Constants.QUERY_FIRST_NAME, account.getFIRST_NAME());
+        params.put(Constants.QUERY_LAST_NAME, account.getLAST_NAME());
+        params.put(Constants.QUERY_AUTHORITY, account.getAUTHORITY());
+        params.put(Constants.QUERY_ENABLED, account.getENABLED());
+        params.put(Constants.QUERY_PASSWORD_CHANGE_REQUIRED, account.getPASSWORD_CHANGE_REQUIRED());
+        params.put(Constants.QUERY_USERNAME, account.getUSERNAME());
+        namedParamJdbcTemplate.update(Constants.UPDATE_ACCOUNT, params);
+    }
+    public void deleteAccount(Account account) {
+        Map<String,Object> params = new HashMap<>();
+        params.put(Constants.QUERY_USERNAME, account.getUSERNAME());
+        namedParamJdbcTemplate.update(Constants.DELETE_ACCOUNT, params);
+    }
+
+    public Map<Integer, Program> getPrograms(){
+        Map<Integer, Program> programs = new HashMap<>();
+        jdbcTemplate.query(Constants.GET_PROGRAMS, rs -> {
+            int programId = rs.getInt(Constants.COLUMN_PROGRAM_ID);
+            if(programs.containsKey(programId)){
+                Program program = programs.get(programId);
+                if(program.getReleaseVersionFunctionMap().containsKey(rs.getString(Constants.COLUMN_RELEASE))){
+                    Map<String, List<String>> versionFunctionMap = program.getReleaseVersionFunctionMap().get(rs.getString(Constants.COLUMN_RELEASE));
+                    if(versionFunctionMap.containsKey(rs.getString(Constants.COLUMN_VERSION))){
+                        versionFunctionMap.get(rs.getString(Constants.COLUMN_VERSION)).add(rs.getString(Constants.COLUMN_FUNCTIONAL_AREA));
+                    }else{
+                        List<String> functionalAreas = new ArrayList<>();
+                        functionalAreas.add(rs.getString(Constants.COLUMN_FUNCTIONAL_AREA));
+                        versionFunctionMap.put(rs.getString(Constants.COLUMN_VERSION), functionalAreas);
+                    }
+                } else{
+                    List<String> functionalAreas = new ArrayList<>();
+                    functionalAreas.add(rs.getString(Constants.COLUMN_FUNCTIONAL_AREA));
+                    Map<String,List<String>> versionFunctionMap = new HashMap<>();
+                    versionFunctionMap.put(rs.getString(Constants.COLUMN_VERSION), functionalAreas);
+                    program.getReleaseVersionFunctionMap().put(rs.getString(Constants.COLUMN_RELEASE), versionFunctionMap);
+                }
+            }
+        });
+        return programs;
     }
 
     @Scheduled(cron = "${spring.cache.clearSchedule}")

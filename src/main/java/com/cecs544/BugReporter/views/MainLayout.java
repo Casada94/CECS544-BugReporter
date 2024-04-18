@@ -1,6 +1,8 @@
 package com.cecs544.BugReporter.views;
 
 import com.cecs544.BugReporter.login.SecurityService;
+import com.cecs544.BugReporter.util.Constants;
+import com.cecs544.BugReporter.views.admin.AdminView;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
@@ -42,10 +44,14 @@ public class MainLayout extends AppLayout {
     }
 
     private void createDrawer() {
-        addToDrawer(new VerticalLayout(
-                new RouterLink("Report A Bug", ReportBugView.class),
-                new RouterLink("Bug Reports", BugReportView.class)
-        ));
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.add(new RouterLink("Report A Bug", ReportBugView.class));
+        verticalLayout.add(new RouterLink("Bug Reports", BugReportView.class));
+        if (securityService.getAuthenticatedUser().getAuthorities().stream().anyMatch(a -> a.getAuthority().contains(Constants.ADMIN))) {
+            verticalLayout.add(new RouterLink("Admin", AdminView.class));
+        }
+
+        addToDrawer(verticalLayout);
     }
 
 }

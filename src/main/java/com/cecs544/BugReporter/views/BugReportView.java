@@ -28,6 +28,8 @@ import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.component.upload.receivers.MultiFileBuffer;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
@@ -50,7 +52,7 @@ import java.util.function.Consumer;
 @PageTitle("Your Bug Reports")
 @PermitAll
 @UIScope
-public class BugReportView extends VerticalLayout {
+public class BugReportView extends VerticalLayout implements BeforeEnterObserver {
     @Autowired
     private BugReportDao bugReportDao;
     @Autowired
@@ -283,6 +285,13 @@ public class BugReportView extends VerticalLayout {
         layout.getThemeList().add("spacing-xs");
 
         return layout;
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
+        if(bugReportDao.passwordChangeRequired(user.getUsername())){
+            beforeEnterEvent.forwardTo("changePassword");
+        }
     }
 
     private static class BugDataFilter {

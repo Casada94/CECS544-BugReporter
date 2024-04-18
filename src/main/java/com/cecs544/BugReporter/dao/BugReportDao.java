@@ -167,6 +167,13 @@ public class BugReportDao {
     }
 
 
+    public boolean passwordChangeRequired(String username) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(Constants.PASSWORD_CHANGE_REQUIRED, new String[]{username}, Boolean.class));
+    }
+    public void changePassword(String username, String newPassword) {
+        jdbcTemplate.update(Constants.CHANGE_PASSWORD, newPassword, username);
+    }
+
     @Scheduled(cron = "${spring.cache.clearSchedule}")
     public void clearCache() {
         cacheManager.getCacheNames().forEach(cache -> cacheManager.getCache(cache).clear());

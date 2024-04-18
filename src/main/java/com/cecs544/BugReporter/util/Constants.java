@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Constants {
 
+    public static final String BCRYPT = "{bcrypt}";
     public static final String USER_QUERY = "SELECT USERNAME,PASSWORD,ENABLED FROM ACCOUNTS WHERE USERNAME = ?";
     public static final String AUTHORITY_QUERY = "SELECT USERNAME, AUTHORITY FROM ACCOUNTS WHERE USERNAME=?";
 
@@ -87,7 +88,7 @@ public class Constants {
     public static final List<Integer> priorities = new ArrayList<>(List.of(new Integer[]{1, 2, 3, 4, 5}));
     public static final List<String> statuses = new ArrayList<>(List.of(new String[]{OPEN, CLOSED}));
 
-
+    public static final String QUERY_USERNAME = "username";
     public static final String QUERY_BUG_REPORT_ID = "bugReportId";
     public static final String QUERY_PROGRAM_ID = "programId";
     public static final String QUERY_REPORT_TYPE = "reportType";
@@ -171,8 +172,12 @@ public class Constants {
     public static final String GET_REPORT_TYPES = "SELECT * FROM REPORT_TYPE";
     public static final String GET_RESOLUTIONS = "SELECT * FROM RESOLUTION";
     public static final String GET_EMPLOYEES = "SELECT USERNAME FROM ACCOUNTS WHERE AUTHORITY<>'USER' AND AUTHORITY<>'ADMIN'";
-}
+    public static final String PASSWORD_CHANGE_REQUIRED = "SELECT PASSWORD_CHANGE_REQUIRED FROM ACCOUNTS WHERE USERNAME=?";
+    public static final String CHANGE_PASSWORD = "UPDATE ACCOUNTS SET PASSWORD_CHANGE_REQUIRED=0,PASSWORD=? WHERE USERNAME=?";
 
+
+
+}
 
 
 

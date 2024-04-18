@@ -1,7 +1,9 @@
 package com.cecs544.BugReporter.views;
 
+import com.cecs544.BugReporter.login.SecurityService;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -11,7 +13,10 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 
 public class MainLayout extends AppLayout {
 
-    public MainLayout() {
+    private SecurityService securityService;
+
+    public MainLayout(SecurityService securityService) {
+        this.securityService = securityService;
         createHeader();
         createDrawer();
     }
@@ -21,9 +26,11 @@ public class MainLayout extends AppLayout {
         logo.addClassNames(
                 LumoUtility.FontSize.LARGE,
                 LumoUtility.Margin.MEDIUM);
+        String u = securityService.getAuthenticatedUser().getUsername();
+        Button logout = new Button("Log out " + u, e -> securityService.logout());
 
-        var header = new HorizontalLayout(new DrawerToggle(), logo );
-
+        var header = new HorizontalLayout(new DrawerToggle(), logo, logout);
+        header.expand(logo);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();
         header.addClassNames(
@@ -40,4 +47,5 @@ public class MainLayout extends AppLayout {
                 new RouterLink("Bug Reports", BugReportView.class)
         ));
     }
+
 }

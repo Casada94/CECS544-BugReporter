@@ -13,6 +13,8 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.receivers.MultiFileBuffer;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
@@ -30,7 +32,7 @@ import java.util.Map;
 @PageTitle("Report Bug")
 @PermitAll
 @UIScope
-public class ReportBugView extends VerticalLayout {
+public class ReportBugView extends VerticalLayout implements BeforeEnterObserver {
     @Autowired
     private BugReportDao bugReportDao;
     @Autowired
@@ -53,7 +55,12 @@ public class ReportBugView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         add(new H1("Report A Bug"));
     }
-
+    @Override
+    public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
+        if(bugReportDao.passwordChangeRequired(securityService.getAuthenticatedUser().getUsername())){
+            beforeEnterEvent.forwardTo("changePassword");
+        }
+    }
     @PostConstruct
     public void finishSetup() {
 

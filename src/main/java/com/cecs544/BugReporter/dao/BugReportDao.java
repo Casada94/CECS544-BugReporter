@@ -291,7 +291,7 @@ public class BugReportDao {
 
     public List<User> fetchEmployeeAccounts(){
         List<User> users = new ArrayList<>();
-        jdbcTemplate.query(Constants.GET_ACCOUNTS, (rs, rowNum) -> {
+        jdbcTemplate.query(Constants.GET_EMPLOYEE_ACCOUNTS, (rs, rowNum) -> {
             User user = new User();
             user.setUsername(rs.getString(Constants.COLUMN_USERNAME));
             user.setFirstName(rs.getString(Constants.COLUMN_FIRST_NAME));

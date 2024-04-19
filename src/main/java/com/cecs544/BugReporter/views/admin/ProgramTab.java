@@ -11,7 +11,6 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
@@ -55,7 +54,7 @@ public class ProgramTab extends VerticalLayout {
 
     private Button updateProgram = new Button("Update Program");
     private Button deleteProgram = new Button("Delete Program");
-
+    private Integer lastClickedId;
 
     public ProgramTab(AdminView parent, List<Program> program){
         this.parent = parent;
@@ -81,6 +80,7 @@ public class ProgramTab extends VerticalLayout {
 
         grid.addItemClickListener(item -> {
             Program clickedProgram = item.getItem();
+            lastClickedId = clickedProgram.getID();
             programNameUpdate.setValue(clickedProgram.getNAME());
             versionUpdate.setValue(clickedProgram.getVersion());
             releaseUpdate.setValue(clickedProgram.getRelease());
@@ -149,10 +149,13 @@ public class ProgramTab extends VerticalLayout {
                 Notification.show(errorMessage,5000, Notification.Position.MIDDLE);
                 return;
             }
-            Integer id = findProgramId(tempProgram);
+            Integer id = lastClickedId;
             if(id ==null){
-                Notification.show("Program not found",5000, Notification.Position.MIDDLE);
-                return;
+                id = findProgramId(tempProgram);
+                if(id ==null){
+                    Notification.show("Program not found",5000, Notification.Position.MIDDLE);
+                    return;
+                }
             }
             tempProgram.setID(id);
             parent.updateProgram(tempProgram);
@@ -167,6 +170,7 @@ public class ProgramTab extends VerticalLayout {
             tempProgram.setFunction(original);
             programs.set(programs.indexOf(tempProgram),tempProgram);
             grid.setItems(programs);
+            lastClickedId= null;
         });
 
         exportButton.addClickListener(e -> {
@@ -185,7 +189,7 @@ public class ProgramTab extends VerticalLayout {
         releaseVertLayoutUpdate.add(rvff2);
         HorizontalLayout programNameLayoutUpdate = new HorizontalLayout(new VerticalLayout(programNameUpdate,releaseUpdate,versionUpdate),new VerticalLayout(releaseVertLayoutUpdate,addFunctionalAreaUpdate));
         programNameLayoutUpdate.setAlignItems(Alignment.BASELINE);
-        tabSheet.add("Update",new Tab(new VerticalLayout(programNameLayoutUpdate,new HorizontalLayout(updateProgram,deleteProgram))));
+        tabSheet.add("Update",new VerticalLayout(programNameLayoutUpdate,new HorizontalLayout(updateProgram,deleteProgram)));
         HorizontalLayout expand = new HorizontalLayout(refreshButton,exportButton);
         expand.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         expand.setWidthFull();

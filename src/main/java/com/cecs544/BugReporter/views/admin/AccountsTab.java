@@ -13,7 +13,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
@@ -150,7 +149,7 @@ public class AccountsTab extends VerticalLayout {
         VerticalLayout add = new VerticalLayout();
         add.add(new HorizontalLayout(username,firstName),new HorizontalLayout(role,lastName),addAccount);
         add.setAlignItems(FlexComponent.Alignment.CENTER);
-        tabSheet.add("Add",new Tab(add));
+        tabSheet.add("Add",new VerticalLayout(add));
 
         VerticalLayout update = new VerticalLayout();
         usernameUpdate.setReadOnly(true);
@@ -160,7 +159,7 @@ public class AccountsTab extends VerticalLayout {
         deleteLayout.setAlignItems(Alignment.BASELINE);
         update.add(new HorizontalLayout(usernameUpdate,firstNameUpdate),new HorizontalLayout(roleUpdate,lastNameUpdate),updatePassword,enabled,updateAccount,deleteLayout);
         update.setAlignItems(FlexComponent.Alignment.CENTER);
-        tabSheet.add("Update",new Tab(update));
+        tabSheet.add("Update",new VerticalLayout(update));
 
         HorizontalLayout expand = new HorizontalLayout(refreshButton,exportButton);
         expand.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);

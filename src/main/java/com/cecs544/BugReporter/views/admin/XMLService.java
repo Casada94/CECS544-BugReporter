@@ -34,7 +34,7 @@ public class XMLService extends VerticalLayout {
         setupDownloadButton();
     }
 
-    private void setupDownloadButton() {
+    void setupDownloadButton() {
         Button downloadButton = new Button("Download XML", new Icon(VaadinIcon.DOWNLOAD));
         downloadButton.addClickListener(event -> {
             List<FunctionalAreaMapping> data = fetchFunctionalAreaMappings();

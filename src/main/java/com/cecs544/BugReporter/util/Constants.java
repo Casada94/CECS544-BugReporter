@@ -150,7 +150,8 @@ public class Constants {
     public static final String COLUMN_TESTED_BY = "TESTED_BY";
     public static final String COLUMN_TESTED_DATE = "TESTED_DATE";
     public static final String COLUMN_TREAT_AS_DEFERRED = "TREAT_AS_DEFERRED";
-    public static final String COLUMN_PROGRAM_ID = "ID";
+    public static final String COLUMN_ID = "ID";
+    public static final String COLUMN_PROGRAM_ID = "PROGRAM_ID";
     public static final String COLUMN_AUTHORITY = "AUTHORITY";
     public static final String COLUMN_FIRST_NAME = "FIRST_NAME";
     public static final String COLUMN_LAST_NAME = "LAST_NAME";
@@ -208,6 +209,7 @@ public class Constants {
             "ON FUNCTIONAL_AREA_MAPPING.FUNCTIONAL_AREA=FUNCTIONAL_AREA.AREA\n" +
             "ORDER BY PROGRAMS.NAME,PROGRAMS.`RELEASE`,PROGRAMS.VERSION,FUNCTIONAL_AREA.AREA";
     public static final String DELETE_PROGRAM_FUNCTIONAL_AREAS = "DELETE FROM FUNCTIONAL_AREA_MAPPING WHERE PROGRAM_ID=:programId and FUNCTIONAL_AREA=:functionalArea";
+    public static final String GET_FUNCTIONAL_AREA_MAPPINGS = "SELECT * FROM FUNCTIONAL_AREA_MAPPING";
 }
 
 

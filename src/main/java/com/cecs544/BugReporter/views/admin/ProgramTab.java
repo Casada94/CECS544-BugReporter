@@ -170,7 +170,7 @@ public class ProgramTab extends VerticalLayout {
         });
 
         exportButton.addClickListener(e -> {
-            //TODO: Export to XML
+            parent.exportFunctionalAreas();
         });
 
         FunctionalArea rvff1 = new FunctionalArea(this,0);

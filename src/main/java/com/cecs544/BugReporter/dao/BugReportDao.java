@@ -1,8 +1,6 @@
 package com.cecs544.BugReporter.dao;
 
-import com.cecs544.BugReporter.model.Account;
-import com.cecs544.BugReporter.model.BugData;
-import com.cecs544.BugReporter.model.Program;
+import com.cecs544.BugReporter.model.*;
 import com.cecs544.BugReporter.util.Constants;
 import com.cecs544.BugReporter.util.Validator;
 import com.vaadin.flow.component.notification.Notification;
@@ -40,13 +38,14 @@ public class BugReportDao {
     public static final String GET_RESOLUTIONS = Constants.GET_RESOLUTIONS;
     public static final String GET_EMPLOYEES = Constants.GET_EMPLOYEES;
     public static final String GET_PROGRAMS_AND_FUNCTIONS = Constants.GET_PROGRAMS_AND_FUNCTIONS;
+    public static final String GET_FUNCTIONAL_AREA_MAPPINGS = Constants.GET_FUNCTIONAL_AREA_MAPPINGS;
 
     @Cacheable("programData")
     public Map<String, Map<String, Map<String, List<String>>>> getProgramData() {
         Map<String, Map<String, Map<String, List<String>>>> programData = new HashMap<>();
         try {
             jdbcTemplate.query(GET_PROGRAMS_AND_FUNCTIONS, rs -> {
-                int id = rs.getInt(Constants.COLUMN_PROGRAM_ID);
+                int id = rs.getInt(Constants.COLUMN_ID);
                 String programName = rs.getString(Constants.COLUMN_PROGRAM_NAME);
                 String release = rs.getString(Constants.COLUMN_RELEASE);
                 String version = rs.getString(Constants.COLUMN_VERSION);
@@ -144,7 +143,7 @@ public class BugReportDao {
         return namedParamJdbcTemplate.query(query, params, (rs, rowNum) -> {
             BugData bugReport = new BugData();
             bugReport.setBugReportId(rs.getInt(Constants.COLUMN_BUG_REPORT_ID));
-            bugReport.setProgramId(rs.getInt(Constants.COLUMN_PROGRAM_ID));
+            bugReport.setProgramId(rs.getInt(Constants.COLUMN_ID));
             bugReport.setProgramName(rs.getString(Constants.COLUMN_PROGRAM_NAME));
             bugReport.setRelease(rs.getString(Constants.COLUMN_RELEASE));
             bugReport.setVersion(rs.getString(Constants.COLUMN_VERSION));
@@ -223,7 +222,7 @@ public class BugReportDao {
         List<Program> programs = new ArrayList<>();
         jdbcTemplate.query(Constants.GET_PROGRAMS_AND_FUNCTIONS, (rs, rowNum) -> {
             Program program = new Program();
-            program.setID(rs.getInt(Constants.COLUMN_PROGRAM_ID));
+            program.setID(rs.getInt(Constants.COLUMN_ID));
             if(programs.contains(program)){
                 programs.get(programs.indexOf(program)).getFunction().add(rs.getString(Constants.COLUMN_AREA));
             }
@@ -288,6 +287,32 @@ public class BugReportDao {
             params.put(Constants.QUERY_FUNCTIONAL_AREA, functionalArea);
             namedParamJdbcTemplate.update(Constants.INSERT_PROGRAM_FUNCTIONAL_AREA, params);
         }
+    }
+
+    public List<User> fetchEmployeeAccounts(){
+        List<User> users = new ArrayList<>();
+        jdbcTemplate.query(Constants.GET_ACCOUNTS, (rs, rowNum) -> {
+            User user = new User();
+            user.setUsername(rs.getString(Constants.COLUMN_USERNAME));
+            user.setFirstName(rs.getString(Constants.COLUMN_FIRST_NAME));
+            user.setLastName(rs.getString(Constants.COLUMN_LAST_NAME));
+            user.setAuthority(rs.getString(Constants.COLUMN_AUTHORITY));
+            user.setEnabled(rs.getBoolean(Constants.COLUMN_ENABLED));
+            user.setPasswordChangeRequired(rs.getBoolean(Constants.COLUMN_PASSWORD_CHANGE_REQUIRED));
+            users.add(user);
+            return null;
+        });
+        return users;
+    }
+
+    public List<FunctionalAreaMapping> fetchFunctionalAreaMappings() {
+        List<FunctionalAreaMapping> mappings = new ArrayList<>();
+        jdbcTemplate.query(GET_FUNCTIONAL_AREA_MAPPINGS, rs -> {
+            int programId = rs.getInt(Constants.COLUMN_PROGRAM_ID);
+            String functionalArea = rs.getString(Constants.COLUMN_FUNCTIONAL_AREA);
+            mappings.add(new FunctionalAreaMapping(programId, functionalArea));
+        });
+        return mappings;
     }
 
 

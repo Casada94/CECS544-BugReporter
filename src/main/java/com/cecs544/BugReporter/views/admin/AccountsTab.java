@@ -144,7 +144,7 @@ public class AccountsTab extends VerticalLayout {
         });
 
         exportButton.addClickListener(e -> {
-            //TODO: Export to XML
+            parent.exportUsers();
         });
 
         VerticalLayout add = new VerticalLayout();

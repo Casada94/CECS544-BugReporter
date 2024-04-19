@@ -173,6 +173,10 @@ public class AccountsTab extends VerticalLayout {
 
 
     private void refreshForm() {
+        username.setValue("");
+        role.setValue("");
+        firstName.setValue("");
+        lastName.setValue("");
         usernameUpdate.setValue("");
         roleUpdate.setValue("");
         firstNameUpdate.setValue("");

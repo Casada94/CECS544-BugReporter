@@ -5,6 +5,7 @@ import com.cecs544.BugReporter.dao.BugReportDao;
 import com.cecs544.BugReporter.enums.Role;
 import com.cecs544.BugReporter.login.SecurityService;
 import com.cecs544.BugReporter.model.BugData;
+import com.cecs544.BugReporter.model.Program;
 import com.cecs544.BugReporter.util.AwsS3Util;
 import com.cecs544.BugReporter.util.Constants;
 import com.cecs544.BugReporter.util.Validator;
@@ -69,7 +70,7 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
     private List<BugData> reports;
     private Select<String> uploadAttachment;
     private Button downloadButton;
-    private Map<String, Map<String, Map<String, Integer>>> programData;
+    private Map<String, Map<String, Map<String, List<String>>>> programData;
     private List<String> reportTypes;
     private List<String> resolutions;
     private List<String> employees;
@@ -78,6 +79,7 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
     private Role userRole;
     private Anchor previous;
     private List<String> fileList;
+    private List<Program> programs;
 
     public BugReportView() {
         addClassName("ReportBugView");
@@ -87,6 +89,9 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
 
         update.addClickListener(click -> {
             BugData bugData = bugForm.getBugData();
+            bugData.setProgramId(findId(bugData.getProgramName(),bugData.getRelease(),bugData.getVersion()));
+//            bugData.setProgramId(findId(bugData.getProgramName(),bugData.getRelease(),bugData.getVersion()));
+
             MultiFileBuffer buffer = null;
             if (bugData.isAttachments()) {
                 if (bugForm.isInitialSubmission()) {
@@ -131,6 +136,8 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
             tabSheet.setVisible(true);
             update.setVisible(true);
             bugForm.updateForm(item.getItem());
+            bugForm.setFunctionalAreaSelect(programs.get(programs.indexOf(new Program(item.getItem().getProgramId()))).getFunction());
+            bugForm.setFunctionalAreaSelect(Validator.emptyIfNull(item.getItem().getFunctionalArea()));
             if (bugForm.hasAttachments()) {
                 fileList = awsS3Util.getFileList(item.getItem().getBugReportId());
                 bugForm.setUploadList(fileList);
@@ -150,6 +157,7 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         userRole = Validator.determineUserType(user.getAuthorities().toArray()[0].toString());
         reports = new ArrayList<>();
         reports = bugReportDao.getBugReports(securityService.getAuthenticatedUser().getUsername(), isUser);
+        programs = bugReportDao.getPrograms();
 //        grid.setItems(new ListDataProvider<>(reports));
 
         configureGrid(isUser, reports);
@@ -160,6 +168,7 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         add(grid);
 
         programData = bugReportDao.getProgramData();
+
         reportTypes = bugReportDao.getReportTypes();
         resolutions = bugReportDao.getResolutions();
         employees = bugReportDao.getEmployees();
@@ -292,6 +301,14 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         if(bugReportDao.passwordChangeRequired(user.getUsername())){
             beforeEnterEvent.forwardTo("changePassword");
         }
+    }
+    public Integer findId(String programName, String release, String version){
+        for(Program program : programs){
+            if(program.getNAME().equals(programName) && program.getRelease().equals(release) && program.getVersion().equals(version)){
+                return program.getID();
+            }
+        }
+        return null;
     }
 
     private static class BugDataFilter {

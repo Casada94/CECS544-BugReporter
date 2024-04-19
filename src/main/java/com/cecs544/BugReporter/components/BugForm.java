@@ -22,10 +22,7 @@ import com.vaadin.flow.component.upload.receivers.MultiFileBuffer;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class BugForm extends VerticalLayout {
     private Text name = new Text(Constants.COMPANY_NAME);
@@ -53,7 +50,7 @@ public class BugForm extends VerticalLayout {
     private TextArea suggestedFixField = new TextArea(Constants.SUGGESTED_FIX);
     private TextField reportedByField = new TextField(Constants.REPORTED_BY);
     private DatePicker reportedDateField = new DatePicker(Constants.REPORTED_DATE);
-    private TextField functionalAreaField = new TextField(Constants.FUNCTIONAL_AREA);
+    private Select<String> functionalAreaSelect = new Select<>();
     private Select<String> assignedToField = new Select<>();
     private TextArea commentsField = new TextArea(Constants.COMMENTS);
     private Select<String> status = new Select<>();
@@ -68,13 +65,13 @@ public class BugForm extends VerticalLayout {
     private Select<String> testedByField = new Select<>();
     private DatePicker testedDatePicker = new DatePicker(Constants.TESTED_DATE);
     private Checkbox deferred = new Checkbox(Constants.TREAT_AS_DEFERRED);
-    private Map<String, Map<String, Map<String, Integer>>> programData;
+    private Map<String, Map<String, Map<String, List<String>>>> programData;
     private List<String> reportTypes;
     private List<String> resolutions;
     private List<String> attachmentsList;
     private boolean initial;
 
-    public BugForm(Map<String, Map<String, Map<String, Integer>>> pData, List<String> rTypes, List<String> resolutionsFromDb, List<String> employees, boolean isUser, UserDetails user, Role userRole, boolean isInitial) {
+    public BugForm(Map<String, Map<String, Map<String, List<String>>>> pData, List<String> rTypes, List<String> resolutionsFromDb, List<String> employees, boolean isUser, UserDetails user, Role userRole, boolean isInitial) {
         setWidth("750px");
         setAlignItems(FlexComponent.Alignment.CENTER);
         programData = pData;
@@ -199,8 +196,9 @@ public class BugForm extends VerticalLayout {
             HorizontalLayout horizontalLayout10 = new HorizontalLayout();
             horizontalLayout10.setWidthFull();
             horizontalLayout10.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-            functionalAreaField.setWidth("200px");
-            horizontalLayout10.add(functionalAreaField);
+            functionalAreaSelect.setLabel(Constants.FUNCTIONAL_AREA);
+            functionalAreaSelect.setWidth("200px");
+            horizontalLayout10.add(functionalAreaSelect);
             assignedToField.setWidth(Constants.NAME_FIELD_WIDTH);
             assignedToField.setLabel(Constants.ASSIGNED_TO);
             assignedToField.setItems(new ListDataProvider<>(employees));
@@ -316,7 +314,7 @@ public class BugForm extends VerticalLayout {
         bugData.setProgramName(programField.getValue());
         bugData.setRelease(releaseField.getValue());
         bugData.setVersion(versionField.getValue());
-        bugData.setProgramId(programData.get(programField.getValue()).get(releaseField.getValue()).get(versionField.getValue()));
+//        bugData.setProgramId(programData.get(programField.getValue()).get(releaseField.getValue()).get(versionField.getValue()));
         bugData.setReportType(reportType.getValue());
         bugData.setSeverity(severity.getValue());
         bugData.setAttachments(attachments.getValue());
@@ -327,7 +325,7 @@ public class BugForm extends VerticalLayout {
         bugData.setSuggestedFix(suggestedFixField.getValue());
         bugData.setReportedBy(reportedByField.getValue());
         bugData.setReportedDate(java.sql.Date.valueOf(reportedDateField.getValue()));
-        bugData.setFunctionalArea(functionalAreaField.getValue());
+        bugData.setFunctionalArea(functionalAreaSelect.getValue());
         bugData.setAssignedTo(assignedToField.getValue());
         bugData.setComments(commentsField.getValue());
         bugData.setStatus(status.getValue());
@@ -335,7 +333,7 @@ public class BugForm extends VerticalLayout {
         bugData.setResolution(resolution.getValue());
         bugData.setResolutionVersion(resolutionVersionField.getValue());
         bugData.setResolutionRelease(resolutionReleaseField.getValue());
-        if(resolution.getValue().equals(Constants.FIXED)){
+        if(!initial && resolution.getValue().equals(Constants.FIXED)){
             if (resolutionReleaseField.getValue().isEmpty()) {
                 Notification.show("Please select a resolution release", 5000, Notification.Position.MIDDLE);
                 throw new IllegalStateException("No resolution release selected");
@@ -344,7 +342,7 @@ public class BugForm extends VerticalLayout {
                 throw new IllegalStateException("No resolution version selected");
             }
         }
-        bugData.setResolutionId(programData.get(programField.getValue()).get(resolutionReleaseField.getValue()).get(resolutionVersionField.getValue()));
+//        bugData.setResolutionId(programData.get(programField.getValue()).get(resolutionReleaseField.getValue()).get(resolutionVersionField.getValue()));
         bugData.setResolvedBy(resolvedByField.getValue());
         bugData.setResolvedDate(Validator.nullOrDate(resolvedDatePicker.getValue()));
         bugData.setTestedBy(testedByField.getValue());
@@ -368,7 +366,7 @@ public class BugForm extends VerticalLayout {
         suggestedFixField.setValue(Validator.emptyIfNull(bugData.getSuggestedFix()));
         reportedByField.setValue(bugData.getReportedBy());
         reportedDateField.setValue(bugData.getReportedDate().toLocalDate());
-        functionalAreaField.setValue(Validator.emptyIfNull(bugData.getFunctionalArea()));
+        functionalAreaSelect.setValue(Validator.emptyIfNull(bugData.getFunctionalArea()));
         assignedToField.setValue(Validator.nullOrString(bugData.getAssignedTo()));
         commentsField.setValue(Validator.emptyIfNull(bugData.getComments()));
         status.setValue(Validator.emptyIfNull(bugData.getStatus().getStatus()));
@@ -436,4 +434,12 @@ public class BugForm extends VerticalLayout {
     public boolean isInitialSubmission() {
         return initial;
     }
+
+    public void setFunctionalAreaSelect(Set<String> functionalAreas) {
+        functionalAreaSelect.setItems(new ListDataProvider<>(functionalAreas));
+    }
+    public void setFunctionalAreaSelect(String functionalArea) {
+        functionalAreaSelect.setValue(functionalArea);
+    }
+
 }

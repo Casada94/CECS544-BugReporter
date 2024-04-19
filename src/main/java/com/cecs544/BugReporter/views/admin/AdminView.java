@@ -21,7 +21,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 @Route(value = "admin", layout = MainLayout.class)
@@ -49,7 +48,7 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
         tabSheet.add("Accounts",accountsTab);
         this.userDetails = securityService.getAuthenticatedUser();
         setWidthFull();
-        programTab = new ProgramTab(this,new ArrayList<>(bugReportDao.getPrograms().values()),roles);
+        programTab = new ProgramTab(this,new ArrayList<>(bugReportDao.getPrograms()));
         tabSheet.add("Programs",programTab);
         tabSheet.setWidthFull();
         add(tabSheet);
@@ -74,18 +73,21 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
     public void deleteAccount(Account account) {
         bugReportDao.deleteAccount(account);
     }
-//    public Map<Integer,Program> getPrograms() {
-//        return bugReportDao.getPrograms();
-//    }
-    public Map<Integer,Program> getPrograms() {
+
+    public List<Program> getPrograms() {
         return bugReportDao.getPrograms();
     }
-    public void addProgram(Program program) {
-//        bugReportDao.addProgram(program);
+
+    public void addProgram(Program programs) {
+        bugReportDao.addProgram(programs);
     }
-    public void updateProgram(Program program) {
-//        bugReportDao.updateProgram(program);
+    public void updateProgram(Program programs) {
+        bugReportDao.updateProgram(programs);
     }
+    public void removeFunctionalAreas(Program program) {
+        bugReportDao.removeFunctionalAreas(program);
+    }
+
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
         if(!userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("ADMIN"))){

@@ -1,7 +1,6 @@
 package com.cecs544.BugReporter.views.admin;
 
-import com.cecs544.BugReporter.components.ReleaseVersionFunctionField;
-import com.cecs544.BugReporter.model.Account;
+import com.cecs544.BugReporter.components.FunctionalArea;
 import com.cecs544.BugReporter.model.Program;
 import com.cecs544.BugReporter.util.Validator;
 import com.vaadin.flow.component.button.Button;
@@ -16,29 +15,14 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.server.StreamResource;
+import org.springframework.dao.DataAccessException;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayInputStream;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
-public class ProgramTab extends Tab {
+public class ProgramTab extends VerticalLayout {
     private AdminView parent;
 
     private Button refreshButton = new Button(new Icon(VaadinIcon.REFRESH));
@@ -49,193 +33,248 @@ public class ProgramTab extends Tab {
 
     private TabSheet tabSheet = new TabSheet();
 
+    /**  ADD TAB  **/
     private TextField programName = new TextField("Program Name");
-    private VerticalLayout releaseVertLayout = new VerticalLayout();
-    private List<ReleaseVersionFunctionField> rvfField = new ArrayList<>();
-    private Button addRelease = new Button("Add Release");
+    private TextField version = new TextField("Version");
+    private TextField release = new TextField("Release");
 
-    private TextField programNameUpdate = new TextField("Program Name");
-    private VerticalLayout releaseVertLayoutUpdate = new VerticalLayout();
-    private List<ReleaseVersionFunctionField> rvfFieldUpdate = new ArrayList<>();
-    private Button addReleaseUpdate = new Button("Add Release");
+    private VerticalLayout releaseVertLayout = new VerticalLayout();
+    private List<FunctionalArea> rvfField = new ArrayList<>();
+    private Button addFunctionalArea = new Button(new Icon(VaadinIcon.PLUS));
 
     private Button addProgram = new Button("Add Program");
-    private Button updateProgram = new Button("Update Program");
 
-    public ProgramTab(AdminView parent, List<Program> program, List<String> roles) {
+    /**  UPDATE TAB  **/
+    private TextField programNameUpdate = new TextField("Program Name");
+    private TextField versionUpdate = new TextField("Version");
+    private TextField releaseUpdate = new TextField("Release");
+
+    private VerticalLayout releaseVertLayoutUpdate = new VerticalLayout();
+    private List<FunctionalArea> rvfFieldUpdate = new ArrayList<>();
+    private Button addFunctionalAreaUpdate = new Button(new Icon(VaadinIcon.PLUS));
+
+    private Button updateProgram = new Button("Update Program");
+    private Button deleteProgram = new Button("Delete Program");
+
+
+    public ProgramTab(AdminView parent, List<Program> program){
         this.parent = parent;
         this.programs = program;
 
+        releaseUpdate.setReadOnly(true);
+        versionUpdate.setReadOnly(true);
+
         refreshButton.addClickListener(click -> {
-            programs = new ArrayList<>(parent.getPrograms().values());
+            programs = new ArrayList<>(parent.getPrograms());
             if (tabSheet.getSelectedTab().getLabel().equals("Update")) {
                 refreshForm();
             }
             grid.setItems(new ListDataProvider<>(programs));
         });
 
+
         grid.addClassName("ProgramData");
-        grid.setSizeFull();
         grid.setSelectionMode(Grid.SelectionMode.SINGLE);
+        grid.setHeight("500px");
+        grid.setWidthFull();
         grid.setItems(programs);
 
         grid.addItemClickListener(item -> {
             Program clickedProgram = item.getItem();
-            programName.setValue(clickedProgram.getNAME());
-            populateUpdateReleaseFields(clickedProgram.getReleaseVersionFunctionMap());
+            programNameUpdate.setValue(clickedProgram.getNAME());
+            versionUpdate.setValue(clickedProgram.getVersion());
+            releaseUpdate.setValue(clickedProgram.getRelease());
+            rvfFieldUpdate.clear();
+            releaseVertLayoutUpdate.removeAll();
+            for(String function : clickedProgram.getFunction()) {
+                FunctionalArea newRvfField = new FunctionalArea(this,rvfFieldUpdate.size());
+                newRvfField.setFunctionField(function);
+                rvfFieldUpdate.add(newRvfField);
+                releaseVertLayoutUpdate.add(newRvfField);
+            }
         });
 
-        addRelease.addClickListener(click -> {
-            ReleaseVersionFunctionField newRvfField = new ReleaseVersionFunctionField(this, rvfField.size());
-            rvfField.add(newRvfField);
-            releaseVertLayout.add(newRvfField);
+        addFunctionalArea.addClickListener(click -> {
+            FunctionalArea functionalArea = new FunctionalArea(this,rvfField.size());
+            rvfField.add(functionalArea);
+            releaseVertLayout.add(functionalArea);
         });
-        addReleaseUpdate.addClickListener(click -> {
-            ReleaseVersionFunctionField newRvfField = new ReleaseVersionFunctionField(this, rvfFieldUpdate.size());
-            rvfFieldUpdate.add(newRvfField);
-            releaseVertLayoutUpdate.add(newRvfField);
+        addFunctionalAreaUpdate.addClickListener(click -> {
+            FunctionalArea functionalArea = new FunctionalArea(this,rvfFieldUpdate.size());
+            rvfFieldUpdate.add(functionalArea);
+            releaseVertLayoutUpdate.add(functionalArea);
         });
 
         addProgram.addClickListener(e -> {
             Program tempProgram = new Program();
             tempProgram.setNAME(programName.getValue());
-            tempProgram.setReleaseVersionFunctionMap(getReleaseFields());
+            tempProgram.setRelease(release.getValue());
+            tempProgram.setVersion(version.getValue());
+            tempProgram.setFunction(getFunctionalAreas());
 
             String errorMessage;
-            if (!(errorMessage = Validator.validProgram(tempProgram)).isEmpty()) {
-                Notification.show(errorMessage, 5000, Notification.Position.MIDDLE);
+            if(!(errorMessage=Validator.validProgram(tempProgram)).isEmpty()) {
+                Notification.show(errorMessage,5000, Notification.Position.MIDDLE);
                 return;
             }
 
-            parent.addProgram(tempProgram);
+            try{
+                parent.addProgram(tempProgram);
+            } catch(DataAccessException dae){
+                Notification.show("Error adding program",5000, Notification.Position.MIDDLE);
+                return;
+            }
             programs.add(tempProgram);
             grid.setItems(programs);
+
+            rvfField.clear();
+            releaseVertLayout.removeAll();
+            programName.setValue("");
+            release.setValue("");
+            version.setValue("");
+            FunctionalArea newRvfField = new FunctionalArea(this,rvfField.size());
+            rvfField.add(newRvfField);
+            releaseVertLayout.add(newRvfField);
         });
 
         updateProgram.addClickListener(e -> {
             Program tempProgram = new Program();
             tempProgram.setNAME(programNameUpdate.getValue());
-            tempProgram.setReleaseVersionFunctionMap(getReleaseUpdateFields());
+            tempProgram.setRelease(releaseUpdate.getValue());
+            tempProgram.setVersion(versionUpdate.getValue());
+            tempProgram.setFunction(getUpdateFunctionalAreas());
 
             String errorMessage;
-            if (!(errorMessage = Validator.validProgram(tempProgram)).isEmpty()) {
-                Notification.show(errorMessage, 5000, Notification.Position.MIDDLE);
+            if(!(errorMessage=Validator.validProgram(tempProgram)).isEmpty()) {
+                Notification.show(errorMessage,5000, Notification.Position.MIDDLE);
                 return;
             }
-
+            Integer id = findProgramId(tempProgram);
+            if(id ==null){
+                Notification.show("Program not found",5000, Notification.Position.MIDDLE);
+                return;
+            }
+            tempProgram.setID(id);
             parent.updateProgram(tempProgram);
-            programs.set(programs.indexOf(tempProgram), tempProgram);
+
+            Set<String> original = tempProgram.getFunction();
+            if(tempProgram.getFunction().size() < programs.get(programs.indexOf(tempProgram)).getFunction().size()){
+                Set<String> difference = new HashSet<>(programs.get(programs.indexOf(tempProgram)).getFunction());
+                difference.removeAll(tempProgram.getFunction());
+                tempProgram.setFunction(difference);
+                parent.removeFunctionalAreas(tempProgram);
+            }
+            tempProgram.setFunction(original);
+            programs.set(programs.indexOf(tempProgram),tempProgram);
             grid.setItems(programs);
         });
 
         exportButton.addClickListener(e -> {
-            List<FunctionalAreaMapping> mappings = fetchFunctionalAreaMappings();
-            String xmlContent = generateXML(mappings);
-            if (xmlContent != null) {
-                StreamResource resource = new StreamResource("functional_areas.xml",
-                        () -> new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8)));
-                resource.setContentType("text/xml");
-                resource.setCacheTime(0);
-                getElement().executeJs("window.open($0, '_blank')", resource);
-            }
+            //TODO: Export to XML
         });
 
-        releaseVertLayout.add(new ReleaseVersionFunctionField(this, 0));
+        FunctionalArea rvff1 = new FunctionalArea(this,0);
+        rvfField.add(rvff1);
+        releaseVertLayout.add(rvff1);
+        HorizontalLayout programNameLayout = new HorizontalLayout(new VerticalLayout(programName,release,version),new VerticalLayout(releaseVertLayout,addFunctionalArea));
+        programNameLayout.setAlignItems(Alignment.BASELINE);
+        tabSheet.add("Add",new VerticalLayout(programNameLayout,addProgram));
 
-        tabSheet.add("Add", new Tab(new HorizontalLayout(programName, releaseVertLayout)));
-        HorizontalLayout expand = new HorizontalLayout(refreshButton, exportButton);
-        expand.expand(refreshButton);
-        expand.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        add(expand, grid, tabSheet);
+        FunctionalArea rvff2 = new FunctionalArea(this,0);
+        rvfFieldUpdate.add(rvff2);
+        releaseVertLayoutUpdate.add(rvff2);
+        HorizontalLayout programNameLayoutUpdate = new HorizontalLayout(new VerticalLayout(programNameUpdate,releaseUpdate,versionUpdate),new VerticalLayout(releaseVertLayoutUpdate,addFunctionalAreaUpdate));
+        programNameLayoutUpdate.setAlignItems(Alignment.BASELINE);
+        tabSheet.add("Update",new Tab(new VerticalLayout(programNameLayoutUpdate,new HorizontalLayout(updateProgram,deleteProgram))));
+        HorizontalLayout expand = new HorizontalLayout(refreshButton,exportButton);
+        expand.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        expand.setWidthFull();
+        setWidthFull();
+        add(expand,grid,tabSheet);
+//        add(addProgram);
     }
 
-    public void setGridData(List<Program> program) {
-        grid.setItems(program);
-    }
-
-    public Account getDataFromForm() {
+    private Integer findProgramId(Program input){
+        for(Program program : programs){
+            if(input.equals(program)){
+                return program.getID();
+            }
+        }
         return null;
     }
 
     public void refreshForm() {
-    }
+        programName.setValue("");
+        version.setValue("");
+        release.setValue("");
+        rvfField.clear();
+        releaseVertLayout.removeAll();
+        FunctionalArea newRvfField = new FunctionalArea(this,rvfField.size());
+        rvfField.add(newRvfField);
+        releaseVertLayout.add(newRvfField);
 
-    private Map<String, Map<String, List<String>>> getReleaseFields() {
-        return rvfField.stream().collect(Collectors.toMap(ReleaseVersionFunctionField::getRelease, ReleaseVersionFunctionField::getVersionsFunctions));
-    }
-
-    private Map<String, Map<String, List<String>>> getReleaseUpdateFields() {
-        return rvfFieldUpdate.stream().collect(Collectors.toMap(ReleaseVersionFunctionField::getRelease, ReleaseVersionFunctionField::getVersionsFunctions));
+        programNameUpdate.setValue("");
+        versionUpdate.setValue("");
+        releaseUpdate.setValue("");
+        rvfFieldUpdate.clear();
+        releaseVertLayoutUpdate.removeAll();
+        FunctionalArea newRvfFieldUpdate = new FunctionalArea(this,rvfFieldUpdate.size());
+        rvfFieldUpdate.add(newRvfFieldUpdate);
+        releaseVertLayoutUpdate.add(newRvfFieldUpdate);
     }
 
     public void removeRelease(int index) {
-        releaseVertLayout.remove(rvfField.get(index));
-        rvfField.remove(index);
-    }
-
-    public void populateUpdateReleaseFields(Map<String, Map<String, List<String>>> releaseMap) {
-        releaseVertLayoutUpdate.removeAll();
-        rvfFieldUpdate.clear();
-        for (String release : releaseMap.keySet()) {
-            ReleaseVersionFunctionField newRvfField = new ReleaseVersionFunctionField(this, rvfFieldUpdate.size());
-            newRvfField.addVersionFunctionFields(releaseMap.get(release));
-            newRvfField.setRelease(release);
-            rvfFieldUpdate.add(newRvfField);
-            releaseVertLayoutUpdate.add(newRvfField);
+        if(tabSheet.getSelectedTab().getLabel().equals("Update")){
+            releaseVertLayoutUpdate.remove(rvfFieldUpdate.get(index));
+            rvfFieldUpdate.remove(index);
+            for(int i = 0; i<rvfFieldUpdate.size();i++) {
+                rvfFieldUpdate.get(i).updateIndex(i);
+            }
+        } else{
+            releaseVertLayout.remove(rvfField.get(index));
+            rvfField.remove(index);
+            for(int i = 0; i<rvfField.size();i++) {
+                rvfField.get(i).updateIndex(i);
+            }
         }
     }
 
-    private List<FunctionalAreaMapping> fetchFunctionalAreaMappings() {
-        List<FunctionalAreaMapping> mappings = new ArrayList<>();
-        String query = "SELECT PROGRAM_ID, FUNCTIONAL_AREA FROM FUNCTIONAL_AREA_MAPPING";
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/yourdatabase", "user", "password");
-             PreparedStatement stmt = conn.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                mappings.add(new FunctionalAreaMapping(rs.getInt("PROGRAM_ID"), rs.getString("FUNCTIONAL_AREA")));
+    public void removeFunctionalArea(int index){
+        if(tabSheet.getSelectedTab().getLabel().equals("Update")){
+            releaseVertLayoutUpdate.remove(rvfFieldUpdate.get(index));
+            rvfFieldUpdate.remove(index);
+            for(int i = 0; i<rvfFieldUpdate.size();i++) {
+                rvfFieldUpdate.get(i).updateIndex(i);
             }
-        } catch (Exception e) {
-            Notification.show("Database connection error: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+        } else{
+            releaseVertLayout.remove(rvfField.get(index));
+            rvfField.remove(index);
+            for(int i = 0; i<rvfField.size();i++) {
+                rvfField.get(i).updateIndex(i);
+            }
         }
-        return mappings;
     }
 
-    private String generateXML(List<FunctionalAreaMapping> mappings) {
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-            Element root = doc.createElement("FunctionalAreas");
-            doc.appendChild(root);
-
-            for (FunctionalAreaMapping mapping : mappings) {
-                Element program = doc.createElement("Program");
-                program.setAttribute("id", String.valueOf(mapping.programId));
-                program.setAttribute("area", mapping.functionalArea);
-                root.appendChild(program);
-            }
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource domSource = new DOMSource(doc);
-            StringWriter writer = new StringWriter();
-            StreamResult result = new StreamResult(writer);
-            transformer.transform(domSource, result);
-            return writer.getBuffer().toString();
-        } catch (Exception e) {
-            Notification.show("Error generating XML: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+    public Set<String> getFunctionalAreas(){
+        Set<String> functionalAreas = new HashSet<>();
+        for(FunctionalArea field : rvfField) {
+            if(!field.getFunctionArea().isBlank())
+                functionalAreas.add(field.getFunctionArea());
+        }
+        if(functionalAreas.isEmpty()) {
             return null;
         }
+        return functionalAreas;
     }
-
-    private static class FunctionalAreaMapping {
-        int programId;
-        String functionalArea;
-
-        FunctionalAreaMapping(int programId, String functionalArea) {
-            this.programId = programId;
-            this.functionalArea = functionalArea;
+    public Set<String> getUpdateFunctionalAreas(){
+        Set<String> functionalAreas = new HashSet<>();
+        for(FunctionalArea field : rvfFieldUpdate) {
+            if(!field.getFunctionArea().isBlank())
+                functionalAreas.add(field.getFunctionArea());
         }
+        if(functionalAreas.isEmpty()) {
+            return null;
+        }
+        return functionalAreas;
     }
 }

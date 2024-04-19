@@ -5,6 +5,7 @@ import com.cecs544.BugReporter.dao.BugReportDao;
 import com.cecs544.BugReporter.enums.Role;
 import com.cecs544.BugReporter.login.SecurityService;
 import com.cecs544.BugReporter.model.BugData;
+import com.cecs544.BugReporter.model.Program;
 import com.cecs544.BugReporter.util.AwsS3Util;
 import com.cecs544.BugReporter.util.Constants;
 import com.cecs544.BugReporter.util.Validator;
@@ -42,7 +43,7 @@ public class ReportBugView extends VerticalLayout implements BeforeEnterObserver
 
     private BugForm form;
     private Button submit = new Button(Constants.SUBMIT);
-    private Map<String, Map<String, Map<String, Integer>>> programData;
+    private Map<String, Map<String, Map<String, List<String>>>> programData;
     private List<String> reportTypes;
     private List<String> resolutions;
     private List<String> employees;
@@ -93,6 +94,7 @@ public class ReportBugView extends VerticalLayout implements BeforeEnterObserver
         submitBtn.addClickListener(click -> {
             try {
                 BugData bugData = form.getBugData();
+                bugData.setProgramId(findId(bugData.getProgramName(),bugData.getRelease(),bugData.getVersion()));
                 MultiFileBuffer buffer = null;
                 if (bugData.isAttachments()) {
                     if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
@@ -125,6 +127,17 @@ public class ReportBugView extends VerticalLayout implements BeforeEnterObserver
                 Notification.show("There was an error submitting your bug report. Please try again later.");
             }
         });
+    }
+
+    public Integer findId(String programName, String release, String version){
+        List<Program> programs = bugReportDao.getPrograms();
+
+        for(Program program : programs){
+            if(program.getNAME().equals(programName) && program.getRelease().equals(release) && program.getVersion().equals(version)){
+                return program.getID();
+            }
+        }
+        return null;
     }
 }
 

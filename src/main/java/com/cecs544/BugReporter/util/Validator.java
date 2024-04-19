@@ -6,8 +6,6 @@ import com.cecs544.BugReporter.model.BugData;
 import com.cecs544.BugReporter.model.Program;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
 
 public class Validator {
 
@@ -97,22 +95,15 @@ public class Validator {
         if (program.getNAME() == null || program.getNAME().isEmpty()) {
             errorMessage.append("Program Name is required. ");
         }
-        Map<String, Map<String, List<String>>> releaseVersionFunctionMap = program.getReleaseVersionFunctionMap();
-        for(String key: releaseVersionFunctionMap.keySet()) {
-            Map<String, List<String>> versionFunctionMap = releaseVersionFunctionMap.get(key);
-            if(versionFunctionMap.isEmpty()){
-                errorMessage.append("Version(s) for " + key + " are required. ");
-            }else{
-                for(String version : versionFunctionMap.keySet()) {
-                    List<String> functions = versionFunctionMap.get(version);
-                    if(functions.isEmpty()) {
-                        errorMessage.append("Function(s) are required. ");
-                    }
-                }
-            }
-
+        if(program.getRelease() == null || program.getRelease().isEmpty()) {
+            errorMessage.append("Release is required. ");
         }
-
+        if(program.getVersion() == null || program.getVersion().isEmpty()) {
+            errorMessage.append("Version is required. ");
+        }
+        if (program.getFunction() == null || program.getFunction().isEmpty()) {
+            errorMessage.append("Functional Area is required. ");
+        }
         return errorMessage.toString();
     }
 }

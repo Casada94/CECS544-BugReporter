@@ -16,11 +16,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @EnableCaching
@@ -41,32 +39,38 @@ public class BugReportDao {
     public static final String GET_REPORT_TYPES = Constants.GET_REPORT_TYPES;
     public static final String GET_RESOLUTIONS = Constants.GET_RESOLUTIONS;
     public static final String GET_EMPLOYEES = Constants.GET_EMPLOYEES;
+    public static final String GET_PROGRAMS_AND_FUNCTIONS = Constants.GET_PROGRAMS_AND_FUNCTIONS;
 
     @Cacheable("programData")
-    public Map<String, Map<String, Map<String, Integer>>> getProgramData() {
-        Map<String, Map<String, Map<String, Integer>>> programData = new HashMap<>();
+    public Map<String, Map<String, Map<String, List<String>>>> getProgramData() {
+        Map<String, Map<String, Map<String, List<String>>>> programData = new HashMap<>();
         try {
-            jdbcTemplate.query(GET_PROGRAM_DATA, rs -> {
+            jdbcTemplate.query(GET_PROGRAMS_AND_FUNCTIONS, rs -> {
+                int id = rs.getInt(Constants.COLUMN_PROGRAM_ID);
                 String programName = rs.getString(Constants.COLUMN_PROGRAM_NAME);
                 String release = rs.getString(Constants.COLUMN_RELEASE);
                 String version = rs.getString(Constants.COLUMN_VERSION);
-                int id = rs.getInt(Constants.COLUMN_PROGRAM_ID);
-                if (programData.containsKey(programName)) {
-                    Map<String, Map<String, Integer>> releaseData = programData.get(programName);
-                    if (releaseData.containsKey(release)) {
-                        Map<String, Integer> versionData = releaseData.get(release);
-                        versionData.put(version, id);
-                    } else {
-                        Map<String, Integer> versionData = new HashMap<>();
-                        versionData.put(version, id);
-                        releaseData.put(release, versionData);
-                    }
-                } else {
-                    Map<String, Integer> versionData = new HashMap<>();
-                    versionData.put(version, id);
-                    Map<String, Map<String, Integer>> releaseData = new HashMap<>();
+                String functionalArea = rs.getString(Constants.COLUMN_AREA);
+                if (!programData.containsKey(programName)) {
+                    Map<String,Map<String,List<String>>> releaseData = new HashMap<>();
+                    Map<String,List<String>> versionData = new HashMap<>();
+                    List<String> functionalAreas = new ArrayList<>();
+                    functionalAreas.add(functionalArea);
+                    versionData.put(version, functionalAreas);
                     releaseData.put(release, versionData);
-                    programData.put(programName, releaseData);
+                    programData.put(programName,releaseData );
+                } else if(!programData.get(programName).containsKey(release)){
+                    Map<String,List<String>> versionData = new HashMap<>();
+                    List<String> functionalAreas = new ArrayList<>();
+                    functionalAreas.add(functionalArea);
+                    versionData.put(version, functionalAreas);
+                    programData.get(programName).put(release, versionData);
+                } else if(!programData.get(programName).get(release).containsKey(version)){
+                    List<String> functionalAreas = new ArrayList<>();
+                    functionalAreas.add(functionalArea);
+                    programData.get(programName).get(release).put(version, functionalAreas);
+                } else {
+                    programData.get(programName).get(release).get(version).add(functionalArea);
                 }
             });
         } catch (DataAccessException e) {
@@ -140,6 +144,7 @@ public class BugReportDao {
         return namedParamJdbcTemplate.query(query, params, (rs, rowNum) -> {
             BugData bugReport = new BugData();
             bugReport.setBugReportId(rs.getInt(Constants.COLUMN_BUG_REPORT_ID));
+            bugReport.setProgramId(rs.getInt(Constants.COLUMN_PROGRAM_ID));
             bugReport.setProgramName(rs.getString(Constants.COLUMN_PROGRAM_NAME));
             bugReport.setRelease(rs.getString(Constants.COLUMN_RELEASE));
             bugReport.setVersion(rs.getString(Constants.COLUMN_VERSION));
@@ -214,32 +219,77 @@ public class BugReportDao {
         namedParamJdbcTemplate.update(Constants.DELETE_ACCOUNT, params);
     }
 
-    public Map<Integer, Program> getPrograms(){
-        Map<Integer, Program> programs = new HashMap<>();
-        jdbcTemplate.query(Constants.GET_PROGRAMS, rs -> {
-            int programId = rs.getInt(Constants.COLUMN_PROGRAM_ID);
-            if(programs.containsKey(programId)){
-                Program program = programs.get(programId);
-                if(program.getReleaseVersionFunctionMap().containsKey(rs.getString(Constants.COLUMN_RELEASE))){
-                    Map<String, List<String>> versionFunctionMap = program.getReleaseVersionFunctionMap().get(rs.getString(Constants.COLUMN_RELEASE));
-                    if(versionFunctionMap.containsKey(rs.getString(Constants.COLUMN_VERSION))){
-                        versionFunctionMap.get(rs.getString(Constants.COLUMN_VERSION)).add(rs.getString(Constants.COLUMN_FUNCTIONAL_AREA));
-                    }else{
-                        List<String> functionalAreas = new ArrayList<>();
-                        functionalAreas.add(rs.getString(Constants.COLUMN_FUNCTIONAL_AREA));
-                        versionFunctionMap.put(rs.getString(Constants.COLUMN_VERSION), functionalAreas);
-                    }
-                } else{
-                    List<String> functionalAreas = new ArrayList<>();
-                    functionalAreas.add(rs.getString(Constants.COLUMN_FUNCTIONAL_AREA));
-                    Map<String,List<String>> versionFunctionMap = new HashMap<>();
-                    versionFunctionMap.put(rs.getString(Constants.COLUMN_VERSION), functionalAreas);
-                    program.getReleaseVersionFunctionMap().put(rs.getString(Constants.COLUMN_RELEASE), versionFunctionMap);
-                }
+    public List<Program> getPrograms(){
+        List<Program> programs = new ArrayList<>();
+        jdbcTemplate.query(Constants.GET_PROGRAMS_AND_FUNCTIONS, (rs, rowNum) -> {
+            Program program = new Program();
+            program.setID(rs.getInt(Constants.COLUMN_PROGRAM_ID));
+            if(programs.contains(program)){
+                programs.get(programs.indexOf(program)).getFunction().add(rs.getString(Constants.COLUMN_AREA));
             }
+            else{
+                program.setNAME(rs.getString(Constants.COLUMN_PROGRAM_NAME));
+                program.setRelease(rs.getString(Constants.COLUMN_RELEASE));
+                program.setVersion(rs.getString(Constants.COLUMN_VERSION));
+                Set<String> functions = new HashSet<>();
+                functions.add(rs.getString(Constants.COLUMN_AREA));
+                program.setFunction(functions);
+                programs.add(program);
+            }
+
+            return null;
         });
         return programs;
     }
+
+    @Transactional
+    public void removeFunctionalAreas(Program program) {
+        Map<String,Object> params = new HashMap<>();
+        params.put(Constants.QUERY_PROGRAM_ID, program.getID());
+        for(String functionalArea: program.getFunction()){
+            params.put(Constants.QUERY_FUNCTIONAL_AREA, functionalArea);
+            namedParamJdbcTemplate.update(Constants.DELETE_PROGRAM_FUNCTIONAL_AREAS, params);
+        }
+    }
+
+    @Transactional
+    public void addProgram(Program program) {
+        Map<String,Object> params = new HashMap<>();
+        params.put(Constants.QUERY_PROGRAM_NAME, program.getNAME());
+        params.put(Constants.QUERY_RELEASE, program.getRelease());
+        params.put(Constants.QUERY_VERSION, program.getVersion());
+        namedParamJdbcTemplate.update(Constants.INSERT_PROGRAM, params);
+        program.setID(jdbcTemplate.queryForObject(Constants.GET_LAST_PROGRAM_ID,Integer.class));
+        for(String functionalArea: program.getFunction()){
+            params.put(Constants.QUERY_FUNCTIONAL_AREA, functionalArea);
+            namedParamJdbcTemplate.update(Constants.INSERT_FUNCTIONAL_AREA, params);
+        }
+        for(String functionalArea: program.getFunction()){
+            params.put(Constants.QUERY_PROGRAM_ID, program.getID());
+            params.put(Constants.QUERY_FUNCTIONAL_AREA, functionalArea);
+            namedParamJdbcTemplate.update(Constants.INSERT_PROGRAM_FUNCTIONAL_AREA, params);
+        }
+    }
+
+    @Transactional
+    public void updateProgram(Program program) {
+        Map<String,Object> params = new HashMap<>();
+        params.put(Constants.QUERY_PROGRAM_NAME, program.getNAME());
+        params.put(Constants.QUERY_RELEASE, program.getRelease());
+        params.put(Constants.QUERY_VERSION, program.getVersion());
+        params.put(Constants.QUERY_PROGRAM_ID, program.getID());
+        namedParamJdbcTemplate.update(Constants.UPDATE_PROGRAM, params);
+        for(String functionalArea: program.getFunction()){
+            params.put(Constants.QUERY_FUNCTIONAL_AREA, functionalArea);
+            namedParamJdbcTemplate.update(Constants.INSERT_FUNCTIONAL_AREA, params);
+        }
+        for(String functionalArea: program.getFunction()){
+            params.put(Constants.QUERY_PROGRAM_ID, program.getID());
+            params.put(Constants.QUERY_FUNCTIONAL_AREA, functionalArea);
+            namedParamJdbcTemplate.update(Constants.INSERT_PROGRAM_FUNCTIONAL_AREA, params);
+        }
+    }
+
 
     @Scheduled(cron = "${spring.cache.clearSchedule}")
     public void clearCache() {

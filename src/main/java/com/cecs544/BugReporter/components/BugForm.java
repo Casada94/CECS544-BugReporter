@@ -416,7 +416,7 @@ public class BugForm extends VerticalLayout {
     }
 
     public boolean attachmentListIsEmpty() {
-        return attachmentsList.isEmpty();
+        return attachmentsList == null || attachmentsList.isEmpty();
     }
 
     public Button getDownloadAttachmentsButton() {

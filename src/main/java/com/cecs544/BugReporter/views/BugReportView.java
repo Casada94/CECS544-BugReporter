@@ -22,7 +22,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
@@ -63,7 +62,7 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
 
     private Grid<BugData> grid = new Grid<>(BugData.class, false);
     private TabSheet tabSheet = new TabSheet();
-    private Tab tab = new Tab();
+    private VerticalLayout vertLayout = new VerticalLayout();
     private BugForm bugForm = null;
     private Button update = new Button(Constants.UPDATE);
     private Button refreshButton = new Button(new Icon(VaadinIcon.REFRESH));
@@ -178,8 +177,8 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         downloadClickListener(downloadButton);
 
 
-        tab.add(bugForm);
-        tabSheet.add("Bug Report", tab);
+        vertLayout.add(bugForm);
+        tabSheet.add("Bug Report", vertLayout);
         tabSheet.setVisible(false);
         update.setVisible(false);
         tabSheet.setWidthFull();
@@ -243,9 +242,9 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         downloadButton = bugForm.getDownloadAttachmentsButton();
         downloadButton.setId("downloadButton");
         downloadClickListener(downloadButton);
-        Tab tab2 = new Tab(bugForm);
-        replace(tab, tab2);
-        tab = tab2;
+        VerticalLayout tab2 = new VerticalLayout(bugForm);
+        replace(vertLayout, tab2);
+        vertLayout = tab2;
     }
 
     private InputStream getStream(File file) {

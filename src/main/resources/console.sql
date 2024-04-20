@@ -36,6 +36,7 @@ CREATE TABLE BUG_REPORTS (
                            FOREIGN KEY (RESOLVED_BY) REFERENCES ACCOUNTS(USERNAME),
                            FOREIGN KEY (TESTED_BY) REFERENCES ACCOUNTS(USERNAME)
 );
+select * from BUG_REPORTS
 
 --drop table PROGRAMS;
 --delete from PROGRAMS;

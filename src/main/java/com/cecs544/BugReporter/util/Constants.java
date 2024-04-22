@@ -78,6 +78,7 @@ public class Constants {
     public static final String CONFIDENTIAL = "CONFIDENTIAL";
 
     public static final String SUBMIT = "SUBMIT";
+    public static final String CLEAR = "CLEAR";
     public static final String UPDATE = "UPDATE";
 
     public static final String NAME_FIELD_WIDTH = "300px";

@@ -310,13 +310,42 @@ public class BugForm extends VerticalLayout {
 
     public BugData getBugData() {
         BugData bugData = new BugData();
+        String errors = new String();
+        String temp = null;
         bugData.setBugReportId(problemNumberField.getValue());
-        bugData.setProgramName(programField.getValue());
-        bugData.setRelease(releaseField.getValue());
-        bugData.setVersion(versionField.getValue());
+        if((temp=programField.getValue())==null){
+            errors += "missing program\n";
+        }else{
+            bugData.setProgramName(temp);
+        }
+//        bugData.setProgramName(programField.getValue());
+        if((temp=releaseField.getValue())==null){
+            errors += "missing release\n";
+        }else{
+            bugData.setRelease(temp);
+        }
+        if((temp=versionField.getValue())==null){
+            errors += "missing version\n";
+
+        }else{
+            bugData.setVersion(temp);
+        }
+
+//        bugData.setVersion(versionField.getValue());
 //        bugData.setProgramId(programData.get(programField.getValue()).get(releaseField.getValue()).get(versionField.getValue()));
-        bugData.setReportType(reportType.getValue());
-        bugData.setSeverity(severity.getValue());
+        if((temp=reportType.getValue())==null){
+            errors += "missing report type\n";
+        }else{
+            bugData.setReportType(temp);
+        }
+//        bugData.setReportType(reportType.getValue());
+        if((temp=severity.getValue())==null){
+            errors += "missing severity\n";
+
+        }else{
+            bugData.setSeverity(temp);
+        }
+//        bugData.setSeverity(severity.getValue());
         bugData.setAttachments(attachments.getValue());
         bugData.setAttachmentDesc(ifYesDescribeField.getValue());
         bugData.setProblemSummary(problemSummaryField.getValue());
@@ -335,11 +364,10 @@ public class BugForm extends VerticalLayout {
         bugData.setResolutionRelease(resolutionReleaseField.getValue());
         if(!initial && resolution.getValue().equals(Constants.FIXED)){
             if (resolutionReleaseField.getValue().isEmpty()) {
-                Notification.show("Please select a resolution release", 5000, Notification.Position.MIDDLE);
-                throw new IllegalStateException("No resolution release selected");
+                errors += "missing resolution Release\n";
             } else if(resolutionVersionField.getValue().isEmpty()){
-                Notification.show("Please select a resolution version", 5000, Notification.Position.MIDDLE);
-                throw new IllegalStateException("No resolution version selected");
+                errors += "missing resolution version\n";
+
             }
         }
 //        bugData.setResolutionId(programData.get(programField.getValue()).get(resolutionReleaseField.getValue()).get(resolutionVersionField.getValue()));
@@ -348,6 +376,11 @@ public class BugForm extends VerticalLayout {
         bugData.setTestedBy(testedByField.getValue());
         bugData.setTestedDate(Validator.nullOrDate(testedDatePicker.getValue()));
         bugData.setTreatAsDeferred(deferred.getValue());
+
+        if(!errors.isBlank()){
+            throw new IllegalStateException(errors);
+        }
+
         return bugData;
     }
 

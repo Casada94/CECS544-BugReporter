@@ -43,6 +43,7 @@ public class ReportBugView extends VerticalLayout implements BeforeEnterObserver
 
     private BugForm form;
     private Button submit = new Button(Constants.SUBMIT);
+    private Button clear = new Button(Constants.CLEAR);
     private Map<String, Map<String, Map<String, List<String>>>> programData;
     private List<String> reportTypes;
     private List<String> resolutions;
@@ -74,9 +75,13 @@ public class ReportBugView extends VerticalLayout implements BeforeEnterObserver
         employees = bugReportDao.getEmployees();
         form = new BugForm(programData, reportTypes, resolutions, employees, isUser, user, userRole, true);
         add(form);
-        add(submit);
+        add(submit,clear);
 
         setSubmitListener(submit);
+
+        clear.addClickListener(click->{
+            refreshForm();
+        });
     }
 
     public void refreshForm() {
@@ -98,12 +103,11 @@ public class ReportBugView extends VerticalLayout implements BeforeEnterObserver
                 MultiFileBuffer buffer = null;
                 if (bugData.isAttachments()) {
                     if (bugData.getAttachmentDesc() == null || bugData.getAttachmentDesc().isEmpty()) {
-                        Notification.show("Please provide a description for your attachment.");
+                        Notification.show("Please provide a description for your attachment.",5000, Notification.Position.MIDDLE);
                         return;
                     } else {
                         buffer = form.getMultiFileBuffer();
                         if (buffer.getFiles().isEmpty()) {
-                            Notification.show("Please provide an attachment.");
                             return;
                         }
                     }
@@ -120,11 +124,11 @@ public class ReportBugView extends VerticalLayout implements BeforeEnterObserver
                 }
                 refreshForm();
             } catch (IllegalStateException e) {
-                e.printStackTrace();
-                Notification.show("Some how you have managed to break my enums. Congrats....");
+//                e.printStackTrace();
+                Notification.show(e.getMessage(),5000, Notification.Position.MIDDLE);
             } catch (DataAccessException dataAccessException) {
                 dataAccessException.printStackTrace();
-                Notification.show("There was an error submitting your bug report. Please try again later.");
+                Notification.show("There was an error submitting your bug report. Please try again later.",5000, Notification.Position.MIDDLE);
             }
         });
     }

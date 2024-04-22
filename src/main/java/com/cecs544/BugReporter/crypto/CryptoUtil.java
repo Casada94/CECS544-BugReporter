@@ -31,6 +31,11 @@ public class CryptoUtil {
 
     private static final Logger log = LogManager.getLogger(CryptoUtil.class);
 
+//    @PostConstruct
+//    public void init() throws CryptoException {
+//        System.out.println(decrypt("fG1G4U9UhYSB9G9uv5ZEAr9dCZpPjaMn3uNfo4wObLSBstSBcDEi/Yxeg8TLflA0"));
+//        System.out.println(decrypt("iqSh19gxu6B5ia8mpUv8upJpos6r+mzCkI94Ywec8goy75eL/sQRawvfKWljBbdPQ9vnWfbEZMYyTq/VkcXByw=="));
+//    }
     public String encrypt(String input) throws CryptoException {
         log.debug("CryptoUtil - encrypt - Entry - ");
 

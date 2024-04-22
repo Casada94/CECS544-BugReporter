@@ -211,6 +211,7 @@ public class BugReportDao {
         params.put(Constants.QUERY_PASSWORD_CHANGE_REQUIRED, account.getPASSWORD_CHANGE_REQUIRED());
         params.put(Constants.QUERY_USERNAME, account.getUSERNAME());
         namedParamJdbcTemplate.update(Constants.UPDATE_ACCOUNT, params);
+        clearCache("employees");
     }
     public void deleteAccount(Account account) {
         Map<String,Object> params = new HashMap<>();
@@ -319,5 +320,8 @@ public class BugReportDao {
     @Scheduled(cron = "${spring.cache.clearSchedule}")
     public void clearCache() {
         cacheManager.getCacheNames().forEach(cache -> cacheManager.getCache(cache).clear());
+    }
+    public void clearCache(String cacheName) {
+        cacheManager.getCache(cacheName).clear();
     }
 }

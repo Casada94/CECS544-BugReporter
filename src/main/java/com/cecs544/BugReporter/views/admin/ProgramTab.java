@@ -42,6 +42,7 @@ public class ProgramTab extends VerticalLayout {
     private Button addFunctionalArea = new Button(new Icon(VaadinIcon.PLUS));
 
     private Button addProgram = new Button("Add Program");
+    private Button clearAddForm = new Button("Clear");
 
     /**  UPDATE TAB  **/
     private TextField programNameUpdate = new TextField("Program Name");
@@ -54,6 +55,7 @@ public class ProgramTab extends VerticalLayout {
 
     private Button updateProgram = new Button("Update Program");
     private Button deleteProgram = new Button("Delete Program");
+    private Button clearUpdateForm = new Button("Clear");
     private Integer lastClickedId;
 
     public ProgramTab(AdminView parent, List<Program> program){
@@ -66,11 +68,18 @@ public class ProgramTab extends VerticalLayout {
         refreshButton.addClickListener(click -> {
             programs = new ArrayList<>(parent.getPrograms());
             if (tabSheet.getSelectedTab().getLabel().equals("Update")) {
-                refreshForm();
+                refreshAddForm();
+                refreshUpdateForm();
             }
             grid.setItems(new ListDataProvider<>(programs));
         });
 
+        clearAddForm.addClickListener(click ->{
+            refreshAddForm();
+        });
+        clearUpdateForm.addClickListener(click ->{
+            refreshUpdateForm();
+        });
 
         grid.addClassName("ProgramData");
         grid.setSelectionMode(Grid.SelectionMode.SINGLE);
@@ -135,6 +144,7 @@ public class ProgramTab extends VerticalLayout {
             FunctionalArea newRvfField = new FunctionalArea(this,rvfField.size());
             rvfField.add(newRvfField);
             releaseVertLayout.add(newRvfField);
+            Notification.show("Successfully Added a New Porgram",5000, Notification.Position.MIDDLE);
         });
 
         updateProgram.addClickListener(e -> {
@@ -171,6 +181,7 @@ public class ProgramTab extends VerticalLayout {
             programs.set(programs.indexOf(tempProgram),tempProgram);
             grid.setItems(programs);
             lastClickedId= null;
+            Notification.show("Successfully Updated Program", 5000, Notification.Position.MIDDLE);
         });
 
         exportButton.addClickListener(e -> {
@@ -182,14 +193,14 @@ public class ProgramTab extends VerticalLayout {
         releaseVertLayout.add(rvff1);
         HorizontalLayout programNameLayout = new HorizontalLayout(new VerticalLayout(programName,release,version),new VerticalLayout(releaseVertLayout,addFunctionalArea));
         programNameLayout.setAlignItems(Alignment.BASELINE);
-        tabSheet.add("Add",new VerticalLayout(programNameLayout,addProgram));
+        tabSheet.add("Add",new VerticalLayout(programNameLayout,addProgram,clearAddForm));
 
         FunctionalArea rvff2 = new FunctionalArea(this,0);
         rvfFieldUpdate.add(rvff2);
         releaseVertLayoutUpdate.add(rvff2);
         HorizontalLayout programNameLayoutUpdate = new HorizontalLayout(new VerticalLayout(programNameUpdate,releaseUpdate,versionUpdate),new VerticalLayout(releaseVertLayoutUpdate,addFunctionalAreaUpdate));
         programNameLayoutUpdate.setAlignItems(Alignment.BASELINE);
-        tabSheet.add("Update",new VerticalLayout(programNameLayoutUpdate,new HorizontalLayout(updateProgram,deleteProgram)));
+        tabSheet.add("Update",new VerticalLayout(programNameLayoutUpdate,new HorizontalLayout(updateProgram,deleteProgram,clearUpdateForm)));
         HorizontalLayout expand = new HorizontalLayout(refreshButton,exportButton);
         expand.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         expand.setWidthFull();
@@ -207,7 +218,7 @@ public class ProgramTab extends VerticalLayout {
         return null;
     }
 
-    public void refreshForm() {
+    public void refreshAddForm(){
         programName.setValue("");
         version.setValue("");
         release.setValue("");
@@ -217,6 +228,8 @@ public class ProgramTab extends VerticalLayout {
         rvfField.add(newRvfField);
         releaseVertLayout.add(newRvfField);
 
+    }
+    public void refreshUpdateForm() {
         programNameUpdate.setValue("");
         versionUpdate.setValue("");
         releaseUpdate.setValue("");

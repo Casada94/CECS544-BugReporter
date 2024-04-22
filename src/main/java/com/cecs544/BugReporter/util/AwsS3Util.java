@@ -6,6 +6,7 @@ import com.vaadin.flow.component.upload.receivers.MultiFileBuffer;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -36,6 +37,8 @@ public class AwsS3Util {
     private String secretKey;
     @Value("${spring.workingDir}")
     private String workingDir;
+    @Value("${spring.cache.maxFileAge}")
+    private long maxFileAge;
 
     private S3Client s3Client;
 
@@ -46,7 +49,7 @@ public class AwsS3Util {
 
         s3Client = S3Client.builder()
                 .region(regionName)
-                .endpointOverride(URI.create("http://localhost:9000"))
+                .endpointOverride(URI.create(localS3Uri))
                 .forcePathStyle(true)
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
                 .build();
@@ -89,6 +92,21 @@ public class AwsS3Util {
     public void deleteAllFiles(String key, List<String> fileNames) {
         for (String fileName : fileNames)
             s3Client.deleteObject(b -> b.bucket(bucketName).key(key + "/" + fileName));
+    }
+
+
+    @Scheduled(cron = "${spring.cache.clearSchedule}")
+    public void clearOldFiles(){
+        File directory = new File(workingDir);
+
+        for(File file: directory.listFiles()){
+            if (file.isDirectory()) {
+                continue;
+            }
+            if(System.currentTimeMillis() - file.lastModified() > maxFileAge){
+                file.delete();
+            }
+        }
     }
 
 }

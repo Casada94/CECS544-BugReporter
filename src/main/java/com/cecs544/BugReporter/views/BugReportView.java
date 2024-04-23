@@ -159,12 +159,13 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         programs = bugReportDao.getPrograms();
 //        grid.setItems(new ListDataProvider<>(reports));
 
+//        grid.setSelectionMode(Grid.SelectionMode.SINGLE);
         configureGrid(isUser, reports);
-
-        grid.setSelectionMode(Grid.SelectionMode.SINGLE);
+        add(grid);
         grid.setHeight("500px");
         grid.setWidthFull();
-        add(grid);
+
+
 
         programData = bugReportDao.getProgramData();
 
@@ -199,37 +200,37 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
     private void configureGrid(boolean isUser, List<BugData> reports) {
         grid.addClassName("BugData");
         grid.setSizeFull();
-        if (isUser) {
-            grid.setColumns("bugReportId", "programName", "release", "version", "reportType",
-                    "severity", "attachments", "attachmentDesc", "problemSummary", "reproducible",
-                    "problemDescription", "suggestedFix", "reportedBy", "reportedDate",
-                    "functionalArea", "assignedTo", "comments", "status", "priority", "resolution",
-                    "resolutionVersion", "resolvedBy", "resolvedDate", "testedBy", "testedDate",
-                    "treatAsDeferred");
-        } else {
-            Grid.Column<BugData> bugIdColumn = grid.addColumn(BugData::getBugReportId);
-            Grid.Column<BugData> programNameColumn = grid.addColumn(BugData::getProgramName);
-            Grid.Column<BugData> reportedDateColumn = grid.addColumn(BugData::getReportedDate);
-            Grid.Column<BugData> statusColumn = grid.addColumn(BugData::getStatus);
-            Grid.Column<BugData> resolutionColumn = grid.addColumn(BugData::getResolution);
-            Grid.Column<BugData> resolvedDateColumn = grid.addColumn(BugData::getResolvedDate);
 
-            GridListDataView<BugData> bugDataView = grid.setItems(reports);
-            BugDataFilter filter = new BugDataFilter(bugDataView);
-            grid.getHeaderRows().clear();
-            HeaderRow headerRow = grid.appendHeaderRow();
-            headerRow.getCell(bugIdColumn).setComponent(createFilterHeader("Bug ID", filter::setBugId));
-            headerRow.getCell(programNameColumn).setComponent(createFilterHeader("Program Name", filter::setProgramName));
-            headerRow.getCell(reportedDateColumn).setComponent(createFilterHeader("Reported Date", filter::setReportedDate));
-            headerRow.getCell(statusColumn).setComponent(createFilterHeader("Status", filter::setStatus));
-            headerRow.getCell(resolutionColumn).setComponent(createFilterHeader("Resolution", filter::setResolution));
-            headerRow.getCell(resolvedDateColumn).setComponent(createFilterHeader("Resolved Date", filter::setResolvedDate));
-        }
-//        grid.getColumns().forEach(col -> {
-//            col.setAutoWidth(true);
-//            col.setResizable(true);
-////            col.setSortable(true);
-//        });
+        Grid.Column<BugData> bugIdColumn = grid.addColumn(BugData::getBugReportId);
+        Grid.Column<BugData> programNameColumn = grid.addColumn(BugData::getProgramName);
+        Grid.Column<BugData> statusColumn = grid.addColumn(BugData::getStatus);
+        Grid.Column<BugData> resolutionColumn = grid.addColumn(BugData::getResolution);
+        Grid.Column<BugData> testedByColumn = grid.addColumn(BugData::getTestedBy);
+        Grid.Column<BugData> assignedToColumn = grid.addColumn(BugData::getAssignedTo);
+        Grid.Column<BugData> priorityColumn = grid.addColumn(BugData::getPriority);
+        Grid.Column<BugData> severityColumn = grid.addColumn(BugData::getSeverity);
+        Grid.Column<BugData> reportTypeColumn = grid.addColumn(BugData::getReportType);
+        Grid.Column<BugData> reportedByColumn = grid.addColumn(BugData::getReportedBy);
+        Grid.Column<BugData> functionalAreaColumn = grid.addColumn(BugData::getFunctionalArea);
+        Grid.Column<BugData> resolvedByColumn = grid.addColumn(BugData::getResolvedBy);
+
+        GridListDataView<BugData> bugDataView = grid.setItems(reports);
+        BugDataFilter filter = new BugDataFilter(bugDataView);
+        grid.getHeaderRows().clear();
+        HeaderRow headerRow = grid.appendHeaderRow();
+        headerRow.getCell(bugIdColumn).setComponent(createFilterHeader("Bug ID", filter::setBugId));
+        headerRow.getCell(programNameColumn).setComponent(createFilterHeader("Program Name", filter::setProgramName));
+        headerRow.getCell(statusColumn).setComponent(createFilterHeader("Status", filter::setStatus));
+        headerRow.getCell(resolutionColumn).setComponent(createFilterHeader("Resolution", filter::setResolution));
+        headerRow.getCell(testedByColumn).setComponent(createFilterHeader("Tested By", filter::setTestedBy));
+        headerRow.getCell(assignedToColumn).setComponent(createFilterHeader("Assigned To", filter::setAssignedTo));
+        headerRow.getCell(priorityColumn).setComponent(createFilterHeader("Priority", filter::setPriority));
+        headerRow.getCell(severityColumn).setComponent(createFilterHeader("Severity", filter::setSeverity));
+        headerRow.getCell(reportTypeColumn).setComponent(createFilterHeader("Report Type", filter::setReportType));
+        headerRow.getCell(reportedByColumn).setComponent(createFilterHeader("Reported By", filter::setReportedBy));
+        headerRow.getCell(functionalAreaColumn).setComponent(createFilterHeader("Functional Area", filter::setFunctionalArea));
+        headerRow.getCell(resolvedByColumn).setComponent(createFilterHeader("Resolved By", filter::setResolvedBy));
+
 
 
     }
@@ -315,7 +316,6 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
 
         private String BugReportId;
         private String ProgramName;
-        private String Release;
         private String severity;
         private String reportedBy;
         private String reportedDate;
@@ -325,12 +325,12 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         private String priority;
         private String resolution;
         private String resolvedBy;
-        private String resolvedDate;
+        private String reportType;
         private String testedBy;
-        private String testedDate;
 
         public BugDataFilter(GridListDataView<BugData> dataView) {
             this.dataView = dataView;
+            this.dataView.addFilter(this::test);
         }
 
         public void setBugId(String bugId) {
@@ -340,11 +340,6 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
 
         public void setProgramName(String programName) {
             this.ProgramName = programName;
-            dataView.refreshAll();
-        }
-
-        public void setReportType(String reportType) {
-            this.Release = reportType;
             dataView.refreshAll();
         }
 
@@ -383,6 +378,10 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
             dataView.refreshAll();
         }
 
+        public void setReportType(String reportType) {
+            this.reportType = reportType;
+            dataView.refreshAll();
+        }
         public void setResolution(String resolution) {
             this.resolution = resolution;
             dataView.refreshAll();
@@ -393,24 +392,38 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
             dataView.refreshAll();
         }
 
-        public void setResolvedDate(String resolvedDate) {
-            this.resolvedDate = resolvedDate;
-            dataView.refreshAll();
-        }
 
         public void setTestedBy(String testedBy) {
             this.testedBy = testedBy;
             dataView.refreshAll();
         }
 
-        public void setTestedDate(String testedDate) {
-            this.testedDate = testedDate;
-            dataView.refreshAll();
+        public boolean test(BugData bugData) {
+            boolean matchesBugId = matches(bugData.getBugReportId().toString(), BugReportId);
+            boolean matchesProgramName = matches(bugData.getProgramName(), ProgramName);
+            boolean matchesSeverity = matches(bugData.getSeverity().getSeverity(), severity);
+            boolean matchesReportedBy = matches(bugData.getReportedBy(), reportedBy);
+            boolean matchesReportedDate = matches(bugData.getReportedDate().toString(), reportedDate);
+            boolean matchesFunctionalArea = matches(bugData.getFunctionalArea(), functionalArea);
+            boolean matchesPriority = matches(bugData.getPriority().toString(), priority);
+            boolean matchesResolution = matches(bugData.getResolution().getResolution(), resolution);
+            boolean matchesResolvedBy = matches(bugData.getResolvedBy(), resolvedBy);
+            boolean matchesTestedBy = matches(bugData.getTestedBy(), testedBy);
+
+            boolean matchesAssignedTo = matches(bugData.getAssignedTo(), assignedTo);
+            boolean matchesStatus = matches(bugData.getStatus().getStatus(), status);
+            boolean matchesReportType = matches(bugData.getReportType().getReportType(), reportType);
+
+            return matchesBugId && matchesProgramName  && matchesSeverity && matchesReportedBy
+                    && matchesReportedDate && matchesFunctionalArea && matchesPriority && matchesResolution
+                    && matchesResolvedBy && matchesTestedBy && matchesReportType
+                    && matchesAssignedTo && matchesStatus;
         }
 
+
         private boolean matches(String value, String searchTerm) {
-            return searchTerm == null || searchTerm.isEmpty()
-                    || value.toLowerCase().contains(searchTerm.toLowerCase());
+            return searchTerm == null || value == null || searchTerm.isEmpty()
+                    || value.toLowerCase().startsWith(searchTerm.toLowerCase());
         }
 
     }

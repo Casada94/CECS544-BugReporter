@@ -220,7 +220,9 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         HeaderRow headerRow = grid.appendHeaderRow();
         headerRow.getCell(bugIdColumn).setComponent(createFilterHeader("Bug ID", filter::setBugId));
         headerRow.getCell(programNameColumn).setComponent(createFilterHeader("Program Name", filter::setProgramName));
-        headerRow.getCell(statusColumn).setComponent(createFilterHeader("Status", filter::setStatus));
+        FilteredHeader layout = (FilteredHeader) createFilterHeader("Status", filter::setStatus);
+        layout.setText("Open");
+        headerRow.getCell(statusColumn).setComponent(layout);
         headerRow.getCell(resolutionColumn).setComponent(createFilterHeader("Resolution", filter::setResolution));
         headerRow.getCell(testedByColumn).setComponent(createFilterHeader("Tested By", filter::setTestedBy));
         headerRow.getCell(assignedToColumn).setComponent(createFilterHeader("Assigned To", filter::setAssignedTo));
@@ -243,9 +245,8 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         downloadButton = bugForm.getDownloadAttachmentsButton();
         downloadButton.setId("downloadButton");
         downloadClickListener(downloadButton);
-        VerticalLayout tab2 = new VerticalLayout(bugForm);
-        replace(vertLayout, tab2);
-        vertLayout = tab2;
+        vertLayout.removeAll();
+        vertLayout.add(bugForm);
     }
 
     private InputStream getStream(File file) {
@@ -276,24 +277,9 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         });
     }
 
-    private static Component createFilterHeader(String labelText,
-                                                Consumer<String> filterChangeConsumer) {
-        NativeLabel label = new NativeLabel(labelText);
-        label.getStyle().set("padding-top", "var(--lumo-space-m)")
-                .set("font-size", "var(--lumo-font-size-xs)");
-        TextField textField = new TextField();
-        textField.setValueChangeMode(ValueChangeMode.EAGER);
-        textField.setClearButtonVisible(true);
-        textField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
-        textField.setWidthFull();
-        textField.getStyle().set("max-width", "100%");
-        textField.addValueChangeListener(
-                e -> filterChangeConsumer.accept(e.getValue()));
-        VerticalLayout layout = new VerticalLayout(label, textField);
-        layout.getThemeList().clear();
-        layout.getThemeList().add("spacing-xs");
-
-        return layout;
+    private Component createFilterHeader(String labelText,
+                                         Consumer<String> filterChangeConsumer) {
+        return new FilteredHeader(labelText, filterChangeConsumer);
     }
 
     @Override
@@ -311,6 +297,30 @@ public class BugReportView extends VerticalLayout implements BeforeEnterObserver
         return null;
     }
 
+    private class FilteredHeader extends VerticalLayout{
+        NativeLabel label = new NativeLabel();
+        TextField textField = new TextField();
+
+        public FilteredHeader(String labelText, Consumer<String> filterChangeConsumer){
+            label.setText(labelText);
+            label.getStyle().set("padding-top", "var(--lumo-space-m)")
+                    .set("font-size", "var(--lumo-font-size-xs)");
+            textField.setValueChangeMode(ValueChangeMode.EAGER);
+            textField.setClearButtonVisible(true);
+            textField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
+            textField.setWidthFull();
+            textField.getStyle().set("max-width", "100%");
+            textField.addValueChangeListener(
+                    e -> filterChangeConsumer.accept(e.getValue()));
+            VerticalLayout layout = new VerticalLayout(label, textField);
+            layout.getThemeList().clear();
+            layout.getThemeList().add("spacing-xs");
+            add(layout);
+        }
+        public void setText(String text){
+            textField.setValue(text);
+        }
+    }
     private static class BugDataFilter {
         private final GridListDataView<BugData> dataView;
 

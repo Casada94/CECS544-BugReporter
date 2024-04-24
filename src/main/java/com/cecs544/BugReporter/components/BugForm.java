@@ -362,6 +362,14 @@ public class BugForm extends VerticalLayout {
         bugData.setResolution(resolution.getValue());
         bugData.setResolutionVersion(resolutionVersionField.getValue());
         bugData.setResolutionRelease(resolutionReleaseField.getValue());
+        if(status.getValue().equals(Constants.CLOSED)){
+            if(bugData.getResolution()==null){
+                errors += "missing resolution\n";
+            }
+            if(bugData.getVersion() == null){
+                errors += "missing resolution version\n";
+            }
+        }
         if(!initial && resolution.getValue().equals(Constants.FIXED)){
             if (resolutionReleaseField.getValue().isEmpty()) {
                 errors += "missing resolution Release\n";
@@ -419,7 +427,7 @@ public class BugForm extends VerticalLayout {
     }
 
     public void configureUpload() {
-        attachmentUpload.setAcceptedFileTypes("image/jpeg", "image/png", "application/pdf", "application/txt");
+        attachmentUpload.setAcceptedFileTypes("image/jpeg", "image/png", "application/pdf", "text/plain");
         attachmentUpload.setMaxFileSize(10 * 1024 * 1024);
 
         attachmentUpload.addFileRejectedListener(event -> {

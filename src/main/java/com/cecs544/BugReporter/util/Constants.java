@@ -184,8 +184,7 @@ public class Constants {
                        on BUG_REPORTS.PROGRAM_ID=PROGRAMS.ID
                 inner join ACCOUNTS
                        on BUG_REPORTS.REPORTED_BY=ACCOUNTS.USERNAME
-            WHERE STATUS='OPEN'
-            ORDER BY BUG_REPORTS.REPORTED_BY DESC;""";
+            ORDER BY BUG_REPORTS.STATUS DESC;""";
     public static final String GET_PROGRAM_DATA = "SELECT * FROM PROGRAMS GROUP BY NAME,`RELEASE`,VERSION ORDER BY NAME,`RELEASE`,VERSION";
     public static final String GET_REPORT_TYPES = "SELECT * FROM REPORT_TYPE";
     public static final String GET_RESOLUTIONS = "SELECT * FROM RESOLUTION";

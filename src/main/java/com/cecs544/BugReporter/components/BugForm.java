@@ -362,7 +362,7 @@ public class BugForm extends VerticalLayout {
         bugData.setResolution(resolution.getValue());
         bugData.setResolutionVersion(resolutionVersionField.getValue());
         bugData.setResolutionRelease(resolutionReleaseField.getValue());
-        if(status.getValue().equals(Constants.CLOSED)){
+        if(!initial && status.getValue().equals(Constants.CLOSED)){
             if(bugData.getResolution()==null){
                 errors += "missing resolution\n";
             }
